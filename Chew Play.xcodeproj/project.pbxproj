@@ -290,6 +290,7 @@
 				DEVELOPMENT_TEAM = ZDP5S46B55;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Chew Play/Info.plist";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Requires camera access to get live feed detection.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -315,9 +316,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ZDP5S46B55;
+				DEVELOPMENT_TEAM = R9TV46N6QC;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Chew Play/Info.plist";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Requires camera access to get live feed detection.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -328,7 +330,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "bibek.Chew-Play";
+				PRODUCT_BUNDLE_IDENTIFIER = com.himalayantechs.chewplay;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
