@@ -23,23 +23,26 @@ class LiveFeedViewController: UIViewController {
     private var time: Double = 0 {
         didSet {
             if time >= 5 {
-                if !movingTracked.contains(true) {
-                    isChewing = false
-                }
+                let sampleCount = movingTracked.count
+                let lowerBound = sampleCount * 30 / 100 // 30%
+                let trueSamples = movingTracked.filter({ $0 }).count
+                isChewing = trueSamples >= lowerBound
+                
                 movingTracked = []
                 time = 0
             }
         }
     }
-    private var movingTracked: [Bool] = [] {
-        didSet {
-            if movingTracked.contains(true) {
-                isChewing = true
-                movingTracked = []
-                time = 0
-            }
-        }
-    }
+    private var movingTracked: [Bool] = []
+//    {
+//        didSet {
+//            if movingTracked.contains(true) {
+//                isChewing = true
+//                movingTracked = []
+//                time = 0
+//            }
+//        }
+//    }
     private var isChewing = false {
         didSet {
             if isChewing {
