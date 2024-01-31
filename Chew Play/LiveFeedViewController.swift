@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  LiveFeedViewController.swift
 //  Chew Play
 //
 //  Created by bibek timalsina on 28/01/2024.
@@ -25,7 +25,7 @@ class LiveFeedViewController: UIViewController {
     }()
     private let textField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "Enter URL"
+        textField.attributedPlaceholder = NSAttributedString(string: "Your URL", attributes: [NSAttributedString.Key.foregroundColor: UIColor.gray])
         textField.clearButtonMode = .whileEditing
         textField.keyboardType = .URL
         textField.returnKeyType = .go

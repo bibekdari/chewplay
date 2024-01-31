@@ -9,38 +9,6 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--Live Feed View Controller-->
-        <scene sceneID="IgJ-gI-8oA">
-            <objects>
-                <viewController modalPresentationStyle="fullScreen" id="0Ph-YW-noa" customClass="LiveFeedViewController" customModule="Chew_Play" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="Usc-vM-CPy">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <subviews>
-                            <wkWebView contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ycm-QM-mB7">
-                                <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
-                                <color key="backgroundColor" red="0.36078431370000003" green="0.38823529410000002" blue="0.4039215686" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <wkWebViewConfiguration key="configuration">
-                                    <audiovisualMediaTypes key="mediaTypesRequiringUserActionForPlayback" none="YES"/>
-                                    <wkPreferences key="preferences"/>
-                                </wkWebViewConfiguration>
-                            </wkWebView>
-                        </subviews>
-                        <viewLayoutGuide key="safeArea" id="44a-Pt-E9O"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                        <constraints>
-                            <constraint firstItem="44a-Pt-E9O" firstAttribute="trailing" secondItem="Ycm-QM-mB7" secondAttribute="trailing" id="9mn-cV-qB8"/>
-                            <constraint firstItem="Ycm-QM-mB7" firstAttribute="top" secondItem="44a-Pt-E9O" secondAttribute="top" id="O5q-qF-RyZ"/>
-                            <constraint firstItem="44a-Pt-E9O" firstAttribute="bottom" secondItem="Ycm-QM-mB7" secondAttribute="bottom" id="Vxj-OK-zBk"/>
-                            <constraint firstItem="Ycm-QM-mB7" firstAttribute="leading" secondItem="44a-Pt-E9O" secondAttribute="leading" id="gxu-QD-DBI"/>
-                        </constraints>
-                    </view>
-                    <navigationItem key="navigationItem" id="4gK-qW-23e"/>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="9bX-cn-LeP" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="1286" y="-122"/>
-        </scene>
         <!--Setting View Controller-->
         <scene sceneID="YI7-U9-QTn">
             <objects>
@@ -166,7 +134,7 @@
                                             <fontDescription key="titleFontDescription" type="boldSystem" pointSize="24"/>
                                         </buttonConfiguration>
                                         <connections>
-                                            <segue destination="0Ph-YW-noa" kind="show" id="eRr-jh-xlH"/>
+                                            <segue destination="nFj-Ll-LhZ" kind="show" id="kqb-Jj-9yL"/>
                                         </connections>
                                     </button>
                                 </subviews>
@@ -223,6 +191,22 @@
                 </stackView>
             </objects>
             <point key="canvasLocation" x="338" y="-123"/>
+        </scene>
+        <!--Live Feed View Controller-->
+        <scene sceneID="t5p-4y-PLq">
+            <objects>
+                <viewController modalPresentationStyle="fullScreen" id="nFj-Ll-LhZ" customClass="LiveFeedViewController" customModule="Chew_Play" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="gru-BO-eKe">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="CQ6-YY-8Eg"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                    <navigationItem key="navigationItem" id="mgf-lA-ZRA"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="goZ-uf-CVx" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1262" y="-124"/>
         </scene>
     </scenes>
     <resources>
