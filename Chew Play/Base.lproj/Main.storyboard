@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21507" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="0Ph-YW-noa">
-    <device id="retina6_12" orientation="portrait" appearance="light"/>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21507" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Hcs-Kl-HjG">
+    <device id="retina4_0" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
@@ -12,13 +12,13 @@
         <!--Live Feed View Controller-->
         <scene sceneID="IgJ-gI-8oA">
             <objects>
-                <viewController id="0Ph-YW-noa" customClass="LiveFeedViewController" customModule="Face_Detection" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController modalPresentationStyle="fullScreen" id="0Ph-YW-noa" customClass="LiveFeedViewController" customModule="Chew_Play" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="Usc-vM-CPy">
-                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <wkWebView contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ycm-QM-mB7">
-                                <rect key="frame" x="0.0" y="59" width="393" height="759"/>
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                                 <color key="backgroundColor" red="0.36078431370000003" green="0.38823529410000002" blue="0.4039215686" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <wkWebViewConfiguration key="configuration">
                                     <audiovisualMediaTypes key="mediaTypesRequiringUserActionForPlayback" none="YES"/>
@@ -40,6 +40,88 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="9bX-cn-LeP" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1286" y="-122"/>
+        </scene>
+        <!--Setting View Controller-->
+        <scene sceneID="YI7-U9-QTn">
+            <objects>
+                <viewController id="Hcs-Kl-HjG" customClass="SettingViewController" customModule="Chew_Play" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="OXP-ND-3rQ">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="nBY-XK-cRA">
+                                <rect key="frame" x="20" y="246.5" width="1221" height="75"/>
+                                <subviews>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="No of chews for video play" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="6TM-FC-pwP">
+                                        <rect key="frame" x="0.0" y="0.0" width="1221" height="20.5"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                        <nil key="textColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <stackView opaque="NO" contentMode="scaleToFill" distribution="fillEqually" translatesAutoresizingMaskIntoConstraints="NO" id="ULD-70-54p">
+                                        <rect key="frame" x="0.0" y="40.5" width="1221" height="34.5"/>
+                                        <subviews>
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="OHb-xR-462">
+                                                <rect key="frame" x="0.0" y="0.0" width="407" height="34.5"/>
+                                                <state key="normal" title="Button"/>
+                                                <buttonConfiguration key="configuration" style="tinted" title="  +  "/>
+                                                <connections>
+                                                    <action selector="plus:" destination="Hcs-Kl-HjG" eventType="touchUpInside" id="UVw-oN-bw8"/>
+                                                </connections>
+                                            </button>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text=" 5 " textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="jCa-93-oln">
+                                                <rect key="frame" x="407" y="0.0" width="407" height="34.5"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                <nil key="textColor"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" id="P5e-Tk-Yyp">
+                                                <rect key="frame" x="814" y="0.0" width="407" height="34.5"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                <state key="normal" title="Button"/>
+                                                <buttonConfiguration key="configuration" style="tinted" title="  -  "/>
+                                                <connections>
+                                                    <action selector="minus:" destination="Hcs-Kl-HjG" eventType="touchUpInside" id="WhC-k8-JJy"/>
+                                                </connections>
+                                            </button>
+                                        </subviews>
+                                        <constraints>
+                                            <constraint firstItem="OHb-xR-462" firstAttribute="width" secondItem="P5e-Tk-Yyp" secondAttribute="width" id="RAr-PY-JKV"/>
+                                        </constraints>
+                                    </stackView>
+                                </subviews>
+                            </stackView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="rqh-SQ-eir">
+                                <rect key="frame" x="129.5" y="428" width="61.5" height="40"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="40" id="Tv6-MG-lp4"/>
+                                </constraints>
+                                <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                                <state key="normal" title="Start"/>
+                                <buttonConfiguration key="configuration" style="filled" title="Start"/>
+                                <connections>
+                                    <segue destination="0Ph-YW-noa" kind="show" id="eRr-jh-xlH"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="z0n-32-R9S"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstAttribute="bottom" secondItem="rqh-SQ-eir" secondAttribute="bottom" constant="100" id="77h-Qb-0H8"/>
+                            <constraint firstAttribute="trailing" secondItem="nBY-XK-cRA" secondAttribute="trailing" constant="20" id="SG4-c0-Tz7"/>
+                            <constraint firstItem="nBY-XK-cRA" firstAttribute="leading" secondItem="z0n-32-R9S" secondAttribute="leading" constant="20" id="TuV-EN-6Kw"/>
+                            <constraint firstItem="rqh-SQ-eir" firstAttribute="centerX" secondItem="OXP-ND-3rQ" secondAttribute="centerX" id="XoJ-Q4-EZp"/>
+                            <constraint firstItem="nBY-XK-cRA" firstAttribute="centerY" secondItem="OXP-ND-3rQ" secondAttribute="centerY" id="dnC-fx-n0X"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="countLabel" destination="jCa-93-oln" id="udw-G0-Cfs"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="jUJ-7w-aNG" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="338" y="-123"/>
         </scene>
     </scenes>
     <resources>

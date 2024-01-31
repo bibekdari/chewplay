@@ -11,45 +11,50 @@ import Vision
 import WebKit
 
 class LiveFeedViewController: UIViewController {
+    private let store = Store()
     private let captureSession = AVCaptureSession()
-    private lazy var previewLayer = AVCaptureVideoPreviewLayer(session: self.captureSession)
+    private var previewLayer: AVCaptureVideoPreviewLayer?
     private let videoDataOutput = AVCaptureVideoDataOutput()
 //    private var faceLayers: [CAShapeLayer] = []
-    private let indicator = UIView()
+    private let headerView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.distribution = .fillProportionally
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        return stackView
+    }()
+    private let textField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "Enter URL"
+        textField.clearButtonMode = .whileEditing
+        textField.keyboardType = .URL
+        textField.returnKeyType = .go
+        return textField
+    }()
+    private let indicator = UIImageView(image: .init(systemName: "circle.fill")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
     private let webview = WKWebView()
     private var oldArea: Double?
     private var timer: Timer?
     private var check = true
     private var time: Double = 0 {
         didSet {
-            if time >= 5 {
-                let sampleCount = movingTracked.count
-                let lowerBound = sampleCount * 30 / 100 // 30%
-                let trueSamples = movingTracked.filter({ $0 }).count
-                isChewing = trueSamples >= lowerBound
-                
+            if time >= store.resetTimeInterval {
+                let totalChews = movingTracked.filter({ $0 }).count
+                isChewing = totalChews >= store.noOfChews
                 movingTracked = []
                 time = 0
             }
         }
     }
     private var movingTracked: [Bool] = []
-//    {
-//        didSet {
-//            if movingTracked.contains(true) {
-//                isChewing = true
-//                movingTracked = []
-//                time = 0
-//            }
-//        }
-//    }
+    
     private var isChewing = false {
         didSet {
             if isChewing {
-                indicator.backgroundColor = .green
+                indicator.tintColor = .green
                 webview.setAllMediaPlaybackSuspended(false)
             } else {
-                indicator.backgroundColor = .red
+                indicator.tintColor = .red
                 webview.setAllMediaPlaybackSuspended(true)
             }
         }
@@ -65,11 +70,44 @@ class LiveFeedViewController: UIViewController {
         DispatchQueue.global().async {
             self.captureSession.startRunning()
         }
+        isChewing = false
+        
+        textField.delegate = self
+        
+        view.addSubview(headerView)
+        NSLayoutConstraint.activate([
+            headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            headerView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            headerView.heightAnchor.constraint(equalToConstant: 40),
+            headerView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20)
+        ])
+        
+        headerView.addArrangedSubview(indicator)
+        
+        let globeIcon = UIImageView(image: .init(systemName: "globe")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
+        globeIcon.contentMode = .scaleAspectFit
+        headerView.addArrangedSubview(globeIcon)
+        
+        headerView.addArrangedSubview(textField)
+        
+        let button = UIButton()
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setImage(.init(systemName: "xmark"), for: .normal)
+        button.addAction(UIAction(handler: { [weak self] _ in
+            self?.dismiss(animated: true)
+        }), for: .touchUpInside)
+        headerView.addArrangedSubview(button)
+        
+        NSLayoutConstraint.activate([
+            globeIcon.widthAnchor.constraint(equalTo: globeIcon.heightAnchor),
+            indicator.widthAnchor.constraint(equalTo: indicator.heightAnchor),
+            button.widthAnchor.constraint(equalTo: button.heightAnchor)
+        ])
 
         webview.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(webview)
         NSLayoutConstraint.activate([
-            webview.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            webview.topAnchor.constraint(equalTo: headerView.bottomAnchor),
             webview.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             webview.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             webview.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
@@ -77,31 +115,24 @@ class LiveFeedViewController: UIViewController {
         webview.configuration.allowsInlineMediaPlayback = true
         let request = URLRequest(url: URL(string: "https://www.youtube.com/")!)
         webview.load(request)
-
-        indicator.backgroundColor = .red
-        indicator.layer.cornerRadius = 10
-        indicator.clipsToBounds = true
-        indicator.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(indicator)
-        NSLayoutConstraint.activate([
-            indicator.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            indicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            indicator.heightAnchor.constraint(equalToConstant: 20),
-            indicator.widthAnchor.constraint(equalToConstant: 20)
-        ])
-        timer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true, block: { [weak self] timer in
-            guard let self else {
-                timer.invalidate()
-                return
+        
+        timer = Timer.scheduledTimer(
+            withTimeInterval: store.observationTimeInterval,
+            repeats: true,
+            block: { [weak self] timer in
+                guard let self else {
+                    timer.invalidate()
+                    return
+                }
+                self.time += self.store.observationTimeInterval
+                self.check = true
             }
-            self.time += 0.25
-            self.check = true
-        })
+        )
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        self.previewLayer.frame = self.view.frame
+        self.previewLayer?.frame = self.webview.frame
     }
     
     private func setupCamera() {
@@ -112,23 +143,31 @@ class LiveFeedViewController: UIViewController {
             if let deviceInput = try? AVCaptureDeviceInput(device: device) {
                 if captureSession.canAddInput(deviceInput) {
                     captureSession.addInput(deviceInput)
-                    setupPreview()
+                    setupPreview(captureSession)
                 }
             }
         }
     }
     
-    private func setupPreview() {
-        self.previewLayer.videoGravity = .resizeAspectFill
-        self.view.layer.addSublayer(self.previewLayer)
-        self.previewLayer.frame = self.view.frame
-        
-        self.videoDataOutput.videoSettings = [(kCVPixelBufferPixelFormatTypeKey as NSString) : NSNumber(value: kCVPixelFormatType_32BGRA)] as [String : Any]
-
-        self.videoDataOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "camera queue"))
-        self.captureSession.addOutput(self.videoDataOutput)
-        let videoConnection = self.videoDataOutput.connection(with: .video)
-        videoConnection?.videoOrientation = .portrait
+    private func setupPreview(_ captureSession: AVCaptureSession) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let previewLayer = AVCaptureVideoPreviewLayer(
+                session: captureSession
+            )
+            DispatchQueue.main.async {
+                self.previewLayer = previewLayer
+                previewLayer.videoGravity = .resizeAspectFill
+                self.view.layer.addSublayer(previewLayer)
+                previewLayer.frame = self.webview.frame
+                
+                self.videoDataOutput.videoSettings = [(kCVPixelBufferPixelFormatTypeKey as NSString) : NSNumber(value: kCVPixelFormatType_32BGRA)] as [String : Any]
+                
+                self.videoDataOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "camera queue"))
+                self.captureSession.addOutput(self.videoDataOutput)
+                let videoConnection = self.videoDataOutput.connection(with: .video)
+                videoConnection?.videoOrientation = .portrait
+            }
+        }
     }
 }
 
@@ -164,13 +203,13 @@ extension LiveFeedViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
     }
     
     private func handleFaceDetectionObservations(observations: [VNFaceObservation]) {
-        guard !observations.isEmpty else {
+        guard !observations.isEmpty, let previewLayer else {
             movingTracked.append(false)
             return
         }
         for observation in observations {
-            let faceRectConverted = self.previewLayer.layerRectConverted(fromMetadataOutputRect: observation.boundingBox)
-            let faceRectanglePath = CGPath(rect: faceRectConverted, transform: nil)
+            let faceRectConverted = previewLayer.layerRectConverted(fromMetadataOutputRect: observation.boundingBox)
+//            let faceRectanglePath = CGPath(rect: faceRectConverted, transform: nil)
             
 //            let faceLayer = CAShapeLayer()
 //            faceLayer.path = faceRectanglePath
@@ -227,7 +266,7 @@ extension LiveFeedViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
     }
 
     private func handleLandmark(_ eye: VNFaceLandmarkRegion2D, faceBoundingBox: CGRect) -> [CGPoint] {
-        let landmarkPath = CGMutablePath()
+//        let landmarkPath = CGMutablePath()
         let landmarkPathPoints = eye.normalizedPoints
             .map({ eyePoint in
                 CGPoint(
@@ -271,3 +310,33 @@ extension AVCaptureDevice {
     }
 }
 
+extension LiveFeedViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        defer {
+            textField.resignFirstResponder()
+            view.endEditing(true)
+        }
+        
+        var urlString = (textField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !urlString.isEmpty else { return true }
+        if let url = URL(string: textField.text ?? "") {
+            if url.scheme == nil {
+                urlString = "https://" + urlString
+            }
+            if url.pathExtension.isEmpty {
+                urlString += ".com"
+            }
+            if let newURL = URL(string: urlString) {
+                let request = URLRequest(url: newURL)
+                webview.load(request)
+            }
+        } else if let url = URL(string: "https://\(textField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "")") {
+            let request = URLRequest(url: url)
+            webview.load(request)
+        } else {
+            textField.text = ""
+        }
+        return true
+    }
+}
