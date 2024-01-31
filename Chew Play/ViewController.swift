@@ -84,8 +84,6 @@ class LiveFeedViewController: UIViewController {
         ])
         
         headerView.addArrangedSubview(indicator)
-        indicator.layer.cornerRadius
-        indicator.clipsToBounds
 //        let globeIcon = UIImageView(image: .init(systemName: "globe")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
 //        globeIcon.contentMode = .scaleAspectFit
 //        headerView.addArrangedSubview(globeIcon)
@@ -160,6 +158,8 @@ class LiveFeedViewController: UIViewController {
                 self.previewLayer = previewLayer
                 previewLayer.videoGravity = .resizeAspectFill
                 self.view.layer.addSublayer(previewLayer)
+                self.view.bringSubviewToFront(self.webview)
+                self.view.bringSubviewToFront(self.headerView)
                 previewLayer.frame = self.webview.frame
                 
                 self.videoDataOutput.videoSettings = [(kCVPixelBufferPixelFormatTypeKey as NSString) : NSNumber(value: kCVPixelFormatType_32BGRA)] as [String : Any]
