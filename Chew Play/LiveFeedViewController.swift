@@ -39,7 +39,7 @@ class LiveFeedViewController: UIViewController {
     private var check = true
     private var time: Double = 0 {
         didSet {
-            if time >= store.resetTimeInterval {
+            if time >= Double(store.resetTimeInterval) {
                 let totalChews = movingTracked.filter({ $0 }).count
                 isChewing = totalChews >= store.noOfChews
                 movingTracked = []
@@ -54,6 +54,12 @@ class LiveFeedViewController: UIViewController {
             if isChewing {
                 indicator.tintColor = .green
                 webview.setAllMediaPlaybackSuspended(false)
+                
+                let reward = max((store.rewardTime - store.resetTimeInterval), store.resetTimeInterval)
+                
+                DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .seconds(reward))) { [weak self] in
+                    self?.setTimer()
+                }
             } else {
                 indicator.tintColor = .red
                 webview.setAllMediaPlaybackSuspended(true)
@@ -74,7 +80,6 @@ class LiveFeedViewController: UIViewController {
                 }
             }
         }
-        isChewing = false
         
         textField.delegate = self
         
@@ -119,6 +124,16 @@ class LiveFeedViewController: UIViewController {
         let request = URLRequest(url: URL(string: "https://www.youtube.com/")!)
         webview.load(request)
         
+        isChewing = true
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        self.previewLayer?.frame = self.webview.frame
+    }
+    
+    private func setTimer() {
+        timer?.invalidate()
         timer = Timer.scheduledTimer(
             withTimeInterval: store.observationTimeInterval,
             repeats: true,
@@ -131,11 +146,6 @@ class LiveFeedViewController: UIViewController {
                 self.check = true
             }
         )
-    }
-    
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        self.previewLayer?.frame = self.webview.frame
     }
     
     private func setupCamera(completion: @escaping (Bool) -> Void) {

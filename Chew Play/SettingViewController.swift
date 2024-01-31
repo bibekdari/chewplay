@@ -9,35 +9,54 @@ import UIKit
 
 class Store {
     private enum Constants {
-        static let chewTimesKey = "chew_time"
-        static let resetTimeIntervalKey = "reset_time"
+        enum Keys {
+            static let chewTimesKey = "chew_time"
+            static let resetTimeIntervalKey = "reset_time"
+            static let rewardTimeKey = "reward_time"
+        }
+        
         static let defaultNoOfChews = 3
         static let minNoOfChews = 1
-        static let defaultResetTimeInterval = 5.0
-        static let minResetTimeInterval = 1.0
-        static let maxResetTimeInterval = 30.0
+        
+        static let defaultResetTimeInterval = 5
+        static let minResetTimeInterval = 1
+        static let maxResetTimeInterval = 30
+        
+        static let defaultRewardTime = 30
+        static let maxRewardTime = 45
+        static let minRewardTime = 5
     }
+    
+    let observationTimeInterval: Double = 0.25
 
     private(set) var noOfChews: Int {
         didSet {
-            UserDefaults.standard.set(noOfChews, forKey: Constants.chewTimesKey)
+            UserDefaults.standard.set(noOfChews, forKey: Constants.Keys.chewTimesKey)
         }
     }
     
-    private(set) var resetTimeInterval: Double {
+    private(set) var resetTimeInterval: Int {
         didSet {
-            UserDefaults.standard.set(resetTimeInterval, forKey: Constants.resetTimeIntervalKey)
+            UserDefaults.standard.set(resetTimeInterval, forKey: Constants.Keys.resetTimeIntervalKey)
         }
     }
-    let observationTimeInterval: Double = 0.25
+    
+    private(set) var rewardTime: Int {
+        didSet {
+            UserDefaults.standard.set(rewardTime, forKey: Constants.Keys.rewardTimeKey)
+        }
+    }
     
     private var maxChews: Double {
-        resetTimeInterval / observationTimeInterval
+        Double(resetTimeInterval) / observationTimeInterval
     }
     
     init() {
-        self.noOfChews = (UserDefaults.standard.value(forKey: Constants.chewTimesKey) as? Int) ?? Constants.defaultNoOfChews
-        self.resetTimeInterval = (UserDefaults.standard.value(forKey: Constants.resetTimeIntervalKey) as? Double) ?? Constants.defaultResetTimeInterval
+        self.noOfChews = (UserDefaults.standard.value(forKey: Constants.Keys.chewTimesKey) as? Int) ?? Constants.defaultNoOfChews
+        
+        self.resetTimeInterval = (UserDefaults.standard.value(forKey: Constants.Keys.resetTimeIntervalKey) as? Int) ?? Constants.defaultResetTimeInterval
+        
+        self.rewardTime = (UserDefaults.standard.value(forKey: Constants.Keys.rewardTimeKey) as? Int) ?? Constants.defaultRewardTime
     }
     
     func increment(by value: Int) {
@@ -49,7 +68,7 @@ class Store {
     }
     
     func incrementTime(by value: Int) {
-        let newValue = resetTimeInterval + Double(value)
+        let newValue = resetTimeInterval + value
         if newValue < Constants.minResetTimeInterval || newValue > Constants.maxResetTimeInterval {
             return
         }
@@ -60,9 +79,18 @@ class Store {
         }
     }
     
+    func incrementReward(by value: Int) {
+        let newValue = rewardTime + value
+        if newValue < Constants.minRewardTime || newValue > Constants.maxRewardTime {
+            return
+        }
+        rewardTime = newValue
+    }
+    
     func reset() {
         self.noOfChews = Constants.defaultNoOfChews
         self.resetTimeInterval = Constants.defaultResetTimeInterval
+        self.rewardTime = Constants.defaultRewardTime
     }
 }
 
@@ -81,6 +109,12 @@ class SettingViewController: UIViewController {
         }
     }
     
+    @IBOutlet public var rewardLabel: UILabel! {
+        didSet {
+            updateValue()
+        }
+    }
+    
     @IBOutlet public var textLabel: UILabel! {
         didSet {
             updateValue()
@@ -89,8 +123,9 @@ class SettingViewController: UIViewController {
     
     private func updateValue() {
         countLabel?.text = "\(store.noOfChews) times"
-        timeIntervalLabel?.text = "per \(Int(store.resetTimeInterval)) sec"
-        textLabel?.text = "\(store.noOfChews) chews per \(Int(store.resetTimeInterval)) sec"
+        timeIntervalLabel?.text = "per \(store.resetTimeInterval) sec"
+        rewardLabel?.text = "\(store.rewardTime) sec reward"
+        textLabel?.text = "\(store.noOfChews) chews/ \(store.resetTimeInterval) sec for \(store.rewardTime) sec of reward"
     }
     
     @IBAction public func plus(_ sender: UIButton) {
@@ -110,6 +145,16 @@ class SettingViewController: UIViewController {
     
     @IBAction public func minusTime(_ sender: UIButton) {
         store.incrementTime(by: -1)
+        updateValue()
+    }
+    
+    @IBAction public func plusReward(_ sender: UIButton) {
+        store.incrementReward(by: 1)
+        updateValue()
+    }
+    
+    @IBAction public func minusReward(_ sender: UIButton) {
+        store.incrementReward(by: -1)
         updateValue()
     }
     
