@@ -294,7 +294,6 @@
 				DEVELOPMENT_TEAM = ZDP5S46B55;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Chew Play/Info.plist";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Requires camera access to get live feed detection.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -323,7 +322,6 @@
 				DEVELOPMENT_TEAM = R9TV46N6QC;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Chew Play/Info.plist";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Requires camera access to get live feed detection.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
