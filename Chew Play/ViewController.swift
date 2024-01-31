@@ -14,7 +14,7 @@ class LiveFeedViewController: UIViewController {
     private let captureSession = AVCaptureSession()
     private lazy var previewLayer = AVCaptureVideoPreviewLayer(session: self.captureSession)
     private let videoDataOutput = AVCaptureVideoDataOutput()
-    private var faceLayers: [CAShapeLayer] = []
+//    private var faceLayers: [CAShapeLayer] = []
     private let indicator = UIView()
     private let webview = WKWebView()
     private var oldArea: Double?
@@ -24,8 +24,7 @@ class LiveFeedViewController: UIViewController {
         didSet {
             if time >= 5 {
                 if !movingTracked.contains(true) {
-                    indicator.backgroundColor = .red
-                    webview.setAllMediaPlaybackSuspended(true)
+                    isChewing = false
                 }
                 movingTracked = []
                 time = 0
@@ -35,13 +34,21 @@ class LiveFeedViewController: UIViewController {
     private var movingTracked: [Bool] = [] {
         didSet {
             if movingTracked.contains(true) {
-                indicator.backgroundColor = .green
-                webview.setAllMediaPlaybackSuspended(false)
+                isChewing = true
                 movingTracked = []
                 time = 0
-                return
             }
-
+        }
+    }
+    private var isChewing = false {
+        didSet {
+            if isChewing {
+                indicator.backgroundColor = .green
+                webview.setAllMediaPlaybackSuspended(false)
+            } else {
+                indicator.backgroundColor = .red
+                webview.setAllMediaPlaybackSuspended(true)
+            }
         }
     }
 
@@ -136,7 +143,7 @@ extension LiveFeedViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
         check = false
         let faceDetectionRequest = VNDetectFaceLandmarksRequest(completionHandler: { (request: VNRequest, error: Error?) in
             DispatchQueue.main.async {
-                self.faceLayers.forEach({ drawing in drawing.removeFromSuperlayer() })
+//                self.faceLayers.forEach({ drawing in drawing.removeFromSuperlayer() })
 
                 if let observations = request.results as? [VNFaceObservation] {
                     self.handleFaceDetectionObservations(observations: observations)
@@ -162,13 +169,13 @@ extension LiveFeedViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
             let faceRectConverted = self.previewLayer.layerRectConverted(fromMetadataOutputRect: observation.boundingBox)
             let faceRectanglePath = CGPath(rect: faceRectConverted, transform: nil)
             
-            let faceLayer = CAShapeLayer()
-            faceLayer.path = faceRectanglePath
-            faceLayer.fillColor = UIColor.clear.cgColor
-            faceLayer.strokeColor = UIColor.yellow.cgColor
-            
-            self.faceLayers.append(faceLayer)
-            self.view.layer.addSublayer(faceLayer)
+//            let faceLayer = CAShapeLayer()
+//            faceLayer.path = faceRectanglePath
+//            faceLayer.fillColor = UIColor.clear.cgColor
+//            faceLayer.strokeColor = UIColor.yellow.cgColor
+//
+//            self.faceLayers.append(faceLayer)
+//            self.view.layer.addSublayer(faceLayer)
             
             //FACE LANDMARKS
             if let innerLips = observation.landmarks?.innerLips {
@@ -183,7 +190,7 @@ extension LiveFeedViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
         if let oldArea {
             let ratio = abs(oldArea - newArea)/oldArea
             movingTracked.append(ratio > 2)
-            print(oldArea, "...", newArea, "...", ratio)
+//            print(oldArea, "...", newArea, "...", ratio)
         }
         oldArea = newArea
     }
@@ -224,15 +231,15 @@ extension LiveFeedViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
                     x: eyePoint.y * faceBoundingBox.height + faceBoundingBox.origin.x,
                     y: eyePoint.x * faceBoundingBox.width + faceBoundingBox.origin.y)
             })
-        landmarkPath.addLines(between: landmarkPathPoints)
-        landmarkPath.closeSubpath()
-        let landmarkLayer = CAShapeLayer()
-        landmarkLayer.path = landmarkPath
-        landmarkLayer.fillColor = UIColor.clear.cgColor
-        landmarkLayer.strokeColor = UIColor.green.cgColor
+//        landmarkPath.addLines(between: landmarkPathPoints)
+//        landmarkPath.closeSubpath()
+//        let landmarkLayer = CAShapeLayer()
+//        landmarkLayer.path = landmarkPath
+//        landmarkLayer.fillColor = UIColor.clear.cgColor
+//        landmarkLayer.strokeColor = UIColor.green.cgColor
 
-        self.faceLayers.append(landmarkLayer)
-        self.view.layer.addSublayer(landmarkLayer)
+//        self.faceLayers.append(landmarkLayer)
+//        self.view.layer.addSublayer(landmarkLayer)
         return landmarkPathPoints
     }
 }
