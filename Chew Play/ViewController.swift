@@ -31,7 +31,8 @@ class LiveFeedViewController: UIViewController {
         textField.returnKeyType = .go
         return textField
     }()
-    private let indicator = UIImageView(image: .init(systemName: "circle.fill")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
+//    private let indicator = UIImageView(image: .init(systemName: "circle.fill")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
+    private let indicator = UIImageView(image: .init(systemName: "globe")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
     private let webview = WKWebView()
     private var oldArea: Double?
     private var timer: Timer?
@@ -83,10 +84,11 @@ class LiveFeedViewController: UIViewController {
         ])
         
         headerView.addArrangedSubview(indicator)
-        
-        let globeIcon = UIImageView(image: .init(systemName: "globe")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
-        globeIcon.contentMode = .scaleAspectFit
-        headerView.addArrangedSubview(globeIcon)
+        indicator.layer.cornerRadius
+        indicator.clipsToBounds
+//        let globeIcon = UIImageView(image: .init(systemName: "globe")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
+//        globeIcon.contentMode = .scaleAspectFit
+//        headerView.addArrangedSubview(globeIcon)
         
         headerView.addArrangedSubview(textField)
         
@@ -99,7 +101,7 @@ class LiveFeedViewController: UIViewController {
         headerView.addArrangedSubview(button)
         
         NSLayoutConstraint.activate([
-            globeIcon.widthAnchor.constraint(equalTo: globeIcon.heightAnchor),
+//            globeIcon.widthAnchor.constraint(equalTo: globeIcon.heightAnchor),
             indicator.widthAnchor.constraint(equalTo: indicator.heightAnchor),
             button.widthAnchor.constraint(equalTo: button.heightAnchor)
         ])
