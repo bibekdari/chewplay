@@ -67,9 +67,12 @@ class LiveFeedViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupCamera()
-        DispatchQueue.global().async {
-            self.captureSession.startRunning()
+        setupCamera() {
+            if $0 {
+                DispatchQueue.global().async {
+                    self.captureSession.startRunning()
+                }
+            }
         }
         isChewing = false
         
@@ -135,7 +138,7 @@ class LiveFeedViewController: UIViewController {
         self.previewLayer?.frame = self.webview.frame
     }
     
-    private func setupCamera() {
+    private func setupCamera(completion: @escaping (Bool) -> Void) {
         let deviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: .video, position: .front)
         if let device = deviceDiscoverySession.devices.first {
             device.set(frameRate: 0.25, device: device)
@@ -143,13 +146,15 @@ class LiveFeedViewController: UIViewController {
             if let deviceInput = try? AVCaptureDeviceInput(device: device) {
                 if captureSession.canAddInput(deviceInput) {
                     captureSession.addInput(deviceInput)
-                    setupPreview(captureSession)
+                    setupPreview(captureSession, completion: completion)
+                    return
                 }
             }
         }
+        completion(false)
     }
     
-    private func setupPreview(_ captureSession: AVCaptureSession) {
+    private func setupPreview(_ captureSession: AVCaptureSession, completion: @escaping (Bool) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
             let previewLayer = AVCaptureVideoPreviewLayer(
                 session: captureSession
@@ -168,6 +173,7 @@ class LiveFeedViewController: UIViewController {
                 self.captureSession.addOutput(self.videoDataOutput)
                 let videoConnection = self.videoDataOutput.connection(with: .video)
                 videoConnection?.videoOrientation = .portrait
+                completion(true)
             }
         }
     }
