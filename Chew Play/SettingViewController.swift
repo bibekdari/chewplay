@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import ARKit
 
 class Store {
     private enum Constants {
@@ -13,10 +14,13 @@ class Store {
             static let chewTimesKey = "chew_time"
             static let resetTimeIntervalKey = "reset_time"
             static let rewardTimeKey = "reward_time"
+            static let sensitivity = "sensitivity"
         }
         
         static let defaultNoOfChews = 3
         static let minNoOfChews = 1
+        
+        static let defaultSensitivity: Float = 6
         
         static let defaultResetTimeInterval = 5
         static let minResetTimeInterval = 1
@@ -28,6 +32,12 @@ class Store {
     }
     
     let observationTimeInterval: Double = 0.25
+    
+    private(set) var sensitivity: Float {
+        didSet {
+            UserDefaults.standard.set(sensitivity, forKey: Constants.Keys.sensitivity)
+        }
+    }
 
     private(set) var noOfChews: Int {
         didSet {
@@ -57,6 +67,8 @@ class Store {
         self.resetTimeInterval = (UserDefaults.standard.value(forKey: Constants.Keys.resetTimeIntervalKey) as? Int) ?? Constants.defaultResetTimeInterval
         
         self.rewardTime = (UserDefaults.standard.value(forKey: Constants.Keys.rewardTimeKey) as? Int) ?? Constants.defaultRewardTime
+        
+        self.sensitivity = (UserDefaults.standard.value(forKey: Constants.Keys.sensitivity) as? Float) ?? Constants.defaultSensitivity
     }
     
     func increment(by value: Int) {
@@ -87,6 +99,10 @@ class Store {
         rewardTime = newValue
     }
     
+    func changeSensitivity(to value: Float) {
+        sensitivity = value
+    }
+    
     func reset() {
         self.noOfChews = Constants.defaultNoOfChews
         self.resetTimeInterval = Constants.defaultResetTimeInterval
@@ -96,6 +112,12 @@ class Store {
 
 class SettingViewController: UIViewController {
     let store = Store()
+    
+    @IBOutlet public var sensitivitySlider: UISlider! {
+        didSet {
+            updateValue()
+        }
+    }
     
     @IBOutlet public var countLabel: UILabel! {
         didSet {
@@ -126,6 +148,7 @@ class SettingViewController: UIViewController {
         timeIntervalLabel?.text = "per \(store.resetTimeInterval) sec"
         rewardLabel?.text = "\(store.rewardTime) sec reward"
         textLabel?.text = "\(store.noOfChews) chews/ \(store.resetTimeInterval) sec for \(store.rewardTime) sec of reward"
+        sensitivitySlider?.setValue(store.sensitivity, animated: true)
     }
     
     @IBAction public func plus(_ sender: UIButton) {
@@ -158,8 +181,23 @@ class SettingViewController: UIViewController {
         updateValue()
     }
     
+    @IBAction public func sensitivityChange(_ sender: UISlider) {
+        store.changeSensitivity(to: sender.value)
+        updateValue()
+    }
+    
     @IBAction public func reset(_ sender: UIButton) {
         store.reset()
         updateValue()
+    }
+    
+    @IBAction public func start(_ sender: UIButton) {
+        if ARFaceTrackingConfiguration.isSupported {
+            let vc = ARLiveFeedViewController()
+            self.present(vc, animated: true)
+        }else {
+            let vc = LiveFeedViewController()
+            self.present(vc, animated: true)
+        }
     }
 }
