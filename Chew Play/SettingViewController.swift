@@ -20,7 +20,7 @@ class Store {
         static let defaultNoOfChews = 3
         static let minNoOfChews = 1
         
-        static let defaultSensitivity: Float = 0.6
+        static let defaultSensitivity: Float = 0.06
         
         static let defaultResetTimeInterval = 5
         static let minResetTimeInterval = 1
@@ -107,6 +107,7 @@ class Store {
         self.noOfChews = Constants.defaultNoOfChews
         self.resetTimeInterval = Constants.defaultResetTimeInterval
         self.rewardTime = Constants.defaultRewardTime
+        self.sensitivity = Constants.defaultSensitivity
     }
 }
 
@@ -195,5 +196,11 @@ class SettingViewController: UIViewController {
         let captureManager: CaptureManager = ARFaceTrackingConfiguration.isSupported ? ARCaptureManager() : AVCaptureManager()
         let vc = LiveFeedViewController(captureManager: captureManager)
         self.present(vc, animated: true)
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        sensitivitySlider.maximumValue = 0.5
+        sensitivitySlider.minimumValue = 0
     }
 }
