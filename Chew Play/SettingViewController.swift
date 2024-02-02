@@ -22,7 +22,7 @@ class Store {
         
         static let defaultSensitivity: Float = 0.06
         
-        static let defaultResetTimeInterval = 5
+        static let defaultResetTimeInterval = 10
         static let minResetTimeInterval = 1
         static let maxResetTimeInterval = 30
         

@@ -26,14 +26,21 @@ class ARCaptureManager: NSObject, CaptureManager {
     private var time: Double = 0 {
         didSet {
             if time >= Double(store.resetTimeInterval) {
-                let totalChews = movingTracked.filter({ $0 }).count
-                isChewingSubject.send(totalChews >= store.noOfChews)
-                movingTracked = []
+                isChewingSubject.send(chewedCount >= store.noOfChews)
+                chewedCount = 0
                 time = 0
             }
         }
     }
-    private var movingTracked: [Bool] = []
+    private var aboveUpperLimit = false {
+        didSet {
+            if aboveUpperLimit == true && oldValue == false {
+                chewedCount += 1
+            }
+        }
+    }
+    
+    private var chewedCount = 0
     
     private var isChewingSubject = CurrentValueSubject<Bool, Never>(false)
     
@@ -87,12 +94,6 @@ extension ARCaptureManager: ARSessionDelegate {
             return
         }
         
-        if jawOpen > store.sensitivity * 0.5 {
-            movingTracked.append(true)
-        }else if jawOpen < 0.025 {
-            movingTracked.append(false)
-        }else {
-            movingTracked.append(false)
-        }
+        aboveUpperLimit = jawOpen > store.sensitivity * 0.5
     }
 }
