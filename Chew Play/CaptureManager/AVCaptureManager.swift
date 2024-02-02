@@ -10,14 +10,6 @@ import AVFoundation
 import Vision
 import Combine
 
-protocol CaptureManager {
-    var store: Store { get }
-    var previewLayer: CALayer? { get }
-    var isChewing: AnyPublisher<Bool, Never> { get }
-    func setup()
-    func setOnSetPreviewLayer(_ value: ((CALayer) -> Void)?)
-}
-
 class AVCaptureManager: NSObject, CaptureManager {
     func setOnSetPreviewLayer(_ value: ((CALayer) -> Void)?) {
         self.onSetPreviewLayer = value
