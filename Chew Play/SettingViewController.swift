@@ -20,7 +20,7 @@ class Store {
         static let defaultNoOfChews = 3
         static let minNoOfChews = 1
         
-        static let defaultSensitivity: Float = 6
+        static let defaultSensitivity: Float = 0.6
         
         static let defaultResetTimeInterval = 5
         static let minResetTimeInterval = 1

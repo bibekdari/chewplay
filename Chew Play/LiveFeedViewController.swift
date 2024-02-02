@@ -10,14 +10,14 @@ import WebKit
 import Combine
 
 class LiveFeedViewController: UIViewController {
-    private let avCaptureManager: CaptureManager
+    private let captureManager: CaptureManager
     
     var store: Store {
-        avCaptureManager.store
+        captureManager.store
     }
     
     var previewLayer: CALayer? {
-        avCaptureManager.previewLayer
+        captureManager.previewLayer
     }
     
     private let headerView: UIStackView = {
@@ -39,7 +39,7 @@ class LiveFeedViewController: UIViewController {
     private let webview = WKWebView()
     
     init(captureManager: CaptureManager) {
-        self.avCaptureManager = captureManager
+        self.captureManager = captureManager
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -89,7 +89,7 @@ class LiveFeedViewController: UIViewController {
         let request = URLRequest(url: URL(string: "https://www.youtube.com/")!)
         webview.load(request)
         
-        avCaptureManager.setOnSetPreviewLayer { [weak self] previewLayer in
+        captureManager.setOnSetPreviewLayer { [weak self] previewLayer in
             guard let self else { return }
             self.view.layer.addSublayer(previewLayer)
             self.view.bringSubviewToFront(self.webview)
@@ -97,8 +97,8 @@ class LiveFeedViewController: UIViewController {
             previewLayer.frame = self.webview.frame
         }
         
-        avCaptureManager.setup()
-        isChewingCancellable = avCaptureManager.isChewing
+        captureManager.setup()
+        isChewingCancellable = captureManager.isChewing
             .sink {[weak self] in
             guard let self else { return }
             if $0 {
@@ -109,6 +109,7 @@ class LiveFeedViewController: UIViewController {
                 self.webview.setAllMediaPlaybackSuspended(true)
             }
         }
+        captureManager.setup()
     }
     
     private var isChewingCancellable: AnyCancellable?
