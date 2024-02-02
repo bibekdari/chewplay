@@ -195,6 +195,7 @@ class SettingViewController: UIViewController {
     @IBAction public func start(_ sender: UIButton) {
         let captureManager: CaptureManager = ARFaceTrackingConfiguration.isSupported ? ARCaptureManager() : AVCaptureManager()
         let vc = LiveFeedViewController(captureManager: captureManager)
+        vc.modalPresentationStyle = .fullScreen
         self.present(vc, animated: true)
     }
     
