@@ -192,12 +192,8 @@ class SettingViewController: UIViewController {
     }
     
     @IBAction public func start(_ sender: UIButton) {
-        if ARFaceTrackingConfiguration.isSupported {
-            let vc = ARLiveFeedViewController()
-            self.present(vc, animated: true)
-        }else {
-            let vc = LiveFeedViewController()
-            self.present(vc, animated: true)
-        }
+        let captureManager: CaptureManager = ARFaceTrackingConfiguration.isSupported ? ARCaptureManager() : AVCaptureManager()
+        let vc = LiveFeedViewController(captureManager: captureManager)
+        self.present(vc, animated: true)
     }
 }

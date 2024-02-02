@@ -10,25 +10,25 @@ import AVFoundation
 import Vision
 import Combine
 
-protocol CaptureManagerDelegate: NSObjectProtocol {
-    func avCaptureManager(_ manager: AVCaptureManager, didSetPreviewLayer previewLayer: CALayer)
-}
-
 protocol CaptureManager {
-    var delegate: CaptureManagerDelegate? { get set }
     var store: Store { get }
     var previewLayer: CALayer? { get }
     var isChewing: AnyPublisher<Bool, Never> { get }
+    func setup()
+    func setOnSetPreviewLayer(_ value: ((CALayer) -> Void)?)
 }
 
 class AVCaptureManager: NSObject, CaptureManager {
-    weak var delegate: CaptureManagerDelegate?
+    func setOnSetPreviewLayer(_ value: ((CALayer) -> Void)?) {
+        self.onSetPreviewLayer = value
+    }
     let store = Store()
     var isChewing: AnyPublisher<Bool, Never> {
         isChewingSubject.eraseToAnyPublisher()
     }
     var previewLayer: CALayer? { avCaptureVideoPreviewLayer }
     
+    private var onSetPreviewLayer: ((CALayer) -> ())?
     private let captureSession = AVCaptureSession()
     private let videoDataOutput = AVCaptureVideoDataOutput()
     private(set) var avCaptureVideoPreviewLayer: AVCaptureVideoPreviewLayer?
@@ -98,7 +98,7 @@ class AVCaptureManager: NSObject, CaptureManager {
             DispatchQueue.main.async {
                 self.avCaptureVideoPreviewLayer = previewLayer
                 previewLayer.videoGravity = .resizeAspectFill
-                self.delegate?.avCaptureManager(self, didSetPreviewLayer: previewLayer)
+                self.onSetPreviewLayer?(previewLayer)
                 
                 self.videoDataOutput.videoSettings = [(kCVPixelBufferPixelFormatTypeKey as NSString) : NSNumber(value: kCVPixelFormatType_32BGRA)] as [String : Any]
                 

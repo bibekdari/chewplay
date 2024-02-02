@@ -10,7 +10,7 @@ import WebKit
 import Combine
 
 class LiveFeedViewController: UIViewController {
-    private let avCaptureManager = AVCaptureManager()
+    private let avCaptureManager: CaptureManager
     
     var store: Store {
         avCaptureManager.store
@@ -37,7 +37,17 @@ class LiveFeedViewController: UIViewController {
     }()
     private let indicator = UIImageView(image: .init(systemName: "globe")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
     private let webview = WKWebView()
-
+    
+    init(captureManager: CaptureManager) {
+        self.avCaptureManager = captureManager
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -79,7 +89,13 @@ class LiveFeedViewController: UIViewController {
         let request = URLRequest(url: URL(string: "https://www.youtube.com/")!)
         webview.load(request)
         
-        avCaptureManager.delegate = self
+        avCaptureManager.setOnSetPreviewLayer { [weak self] previewLayer in
+            guard let self else { return }
+            self.view.layer.addSublayer(previewLayer)
+            self.view.bringSubviewToFront(self.webview)
+            self.view.bringSubviewToFront(self.headerView)
+            previewLayer.frame = self.webview.frame
+        }
         
         avCaptureManager.setup()
         isChewingCancellable = avCaptureManager.isChewing
@@ -131,14 +147,5 @@ extension LiveFeedViewController: UITextFieldDelegate {
             textField.text = ""
         }
         return true
-    }
-}
-
-extension LiveFeedViewController: CaptureManagerDelegate {
-    func avCaptureManager(_ manager: AVCaptureManager, didSetPreviewLayer previewLayer: CALayer) {
-        self.view.layer.addSublayer(previewLayer)
-        self.view.bringSubviewToFront(self.webview)
-        self.view.bringSubviewToFront(self.headerView)
-        previewLayer.frame = self.webview.frame
     }
 }
