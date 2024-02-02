@@ -16,9 +16,15 @@ class AVCaptureManager: NSObject, CaptureManager {
     }
     let store = Store()
     var isChewing: AnyPublisher<Bool, Never> {
-        isChewingSubject.eraseToAnyPublisher()
+        $isChewingSubject.eraseToAnyPublisher()
     }
     var previewLayer: CALayer? { avCaptureVideoPreviewLayer }
+    var progress: AnyPublisher<Float, Never> {
+        $time.map {[weak self] in
+            guard let self else { return 0.0 }
+            return Float($0 / Double(self.store.resetTimeInterval))
+        }.eraseToAnyPublisher()
+    }
     
     private var onSetPreviewLayer: ((CALayer) -> ())?
     private let captureSession = AVCaptureSession()
@@ -27,18 +33,18 @@ class AVCaptureManager: NSObject, CaptureManager {
     private var oldArea: Double?
     private var timer: Timer?
     private var check = true
-    private var time: Double = 0 {
+    @Published private var time: Double = 0 {
         didSet {
             if time >= Double(store.resetTimeInterval) {
                 let totalChews = movingTracked.filter({ $0 }).count
-                isChewingSubject.send(totalChews >= store.noOfChews)
+                isChewingSubject = totalChews >= store.noOfChews
                 movingTracked = []
                 time = 0
             }
         }
     }
     private var movingTracked: [Bool] = []
-    private var isChewingSubject = CurrentValueSubject<Bool, Never>(false)
+    @Published private var isChewingSubject = false
     
     deinit {
         timer?.invalidate()
@@ -54,8 +60,8 @@ class AVCaptureManager: NSObject, CaptureManager {
                 }
             }
         }
-        isChewingSubject.send(true)
-        isChewingCancellable = isChewingSubject.sink { [weak self] value in
+        isChewingSubject = true
+        isChewingCancellable = $isChewingSubject.sink { [weak self] value in
             guard let self else { return }
             if value {
                 let reward = max((self.store.rewardTime - self.store.resetTimeInterval), self.store.resetTimeInterval)

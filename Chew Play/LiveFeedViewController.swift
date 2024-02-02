@@ -37,6 +37,11 @@ class LiveFeedViewController: UIViewController {
     }()
     private let indicator = UIImageView(image: .init(systemName: "globe")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
     private let webview = WKWebView()
+    private let progressView: UIProgressView = {
+        let progressView = UIProgressView()
+        progressView.translatesAutoresizingMaskIntoConstraints = false
+        return progressView
+    }()
     
     init(captureManager: CaptureManager) {
         self.captureManager = captureManager
@@ -89,6 +94,17 @@ class LiveFeedViewController: UIViewController {
         let request = URLRequest(url: URL(string: "https://www.youtube.com/")!)
         webview.load(request)
         
+        view.addSubview(progressView)
+        NSLayoutConstraint.activate([
+            progressView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
+            progressView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            progressView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
+        ])
+        captureManager.progress
+            .sink { [weak self] value in
+                self?.progressView.setProgress(value, animated: true)
+            }.store(in: &cancellables)
+        
         captureManager.setOnSetPreviewLayer { [weak self] previewLayer in
             guard let self else { return }
             self.view.layer.addSublayer(previewLayer)
@@ -98,21 +114,22 @@ class LiveFeedViewController: UIViewController {
         }
         
         captureManager.setup()
-        isChewingCancellable = captureManager.isChewing
+        captureManager.isChewing
             .sink {[weak self] in
-            guard let self else { return }
-            if $0 {
-                self.indicator.tintColor = .green
-                self.webview.setAllMediaPlaybackSuspended(false)
-            } else {
-                self.indicator.tintColor = .red
-                self.webview.setAllMediaPlaybackSuspended(true)
+                guard let self else { return }
+                if $0 {
+                    self.indicator.tintColor = .green
+                    self.webview.setAllMediaPlaybackSuspended(false)
+                } else {
+                    self.indicator.tintColor = .red
+                    self.webview.setAllMediaPlaybackSuspended(true)
+                }
             }
-        }
+            .store(in: &cancellables)
         captureManager.setup()
     }
     
-    private var isChewingCancellable: AnyCancellable?
+    private var cancellables = Set<AnyCancellable>()
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
