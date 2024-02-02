@@ -82,7 +82,8 @@ class LiveFeedViewController: UIViewController {
         avCaptureManager.delegate = self
         
         avCaptureManager.setup()
-        isChewingCancellable = avCaptureManager.$isChewing.sink {[weak self] in
+        isChewingCancellable = avCaptureManager.isChewing
+            .sink {[weak self] in
             guard let self else { return }
             if $0 {
                 self.indicator.tintColor = .green

@@ -8,17 +8,30 @@
 import Foundation
 import AVFoundation
 import Vision
+import Combine
 
 protocol CaptureManagerDelegate: NSObjectProtocol {
     func avCaptureManager(_ manager: AVCaptureManager, didSetPreviewLayer previewLayer: CALayer)
 }
 
-class AVCaptureManager: NSObject {
+protocol CaptureManager {
+    var delegate: CaptureManagerDelegate? { get set }
+    var store: Store { get }
+    var previewLayer: CALayer? { get }
+    var isChewing: AnyPublisher<Bool, Never> { get }
+}
+
+class AVCaptureManager: NSObject, CaptureManager {
     weak var delegate: CaptureManagerDelegate?
     let store = Store()
+    var isChewing: AnyPublisher<Bool, Never> {
+        isChewingSubject.eraseToAnyPublisher()
+    }
+    var previewLayer: CALayer? { avCaptureVideoPreviewLayer }
+    
     private let captureSession = AVCaptureSession()
     private let videoDataOutput = AVCaptureVideoDataOutput()
-    private(set) var previewLayer: AVCaptureVideoPreviewLayer?
+    private(set) var avCaptureVideoPreviewLayer: AVCaptureVideoPreviewLayer?
     private var oldArea: Double?
     private var timer: Timer?
     private var check = true
@@ -26,28 +39,20 @@ class AVCaptureManager: NSObject {
         didSet {
             if time >= Double(store.resetTimeInterval) {
                 let totalChews = movingTracked.filter({ $0 }).count
-                isChewing = totalChews >= store.noOfChews
+                isChewingSubject.send(totalChews >= store.noOfChews)
                 movingTracked = []
                 time = 0
             }
         }
     }
     private var movingTracked: [Bool] = []
-    
-    @Published private(set) var isChewing = false {
-        didSet {
-            if isChewing {
-                let reward = max((store.rewardTime - store.resetTimeInterval), store.resetTimeInterval)
-                DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .seconds(reward))) { [weak self] in
-                    self?.setTimer()
-                }
-            }
-        }
-    }
+    private var isChewingSubject = CurrentValueSubject<Bool, Never>(false)
     
     deinit {
         timer?.invalidate()
     }
+    
+    private var isChewingCancellable: AnyCancellable?
     
     func setup() {
         setupCamera() {
@@ -57,7 +62,16 @@ class AVCaptureManager: NSObject {
                 }
             }
         }
-        isChewing = true
+        isChewingSubject.send(true)
+        isChewingCancellable = isChewingSubject.sink { [weak self] value in
+            guard let self else { return }
+            if value {
+                let reward = max((self.store.rewardTime - self.store.resetTimeInterval), self.store.resetTimeInterval)
+                DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .seconds(reward))) { [weak self] in
+                    self?.setTimer()
+                }
+            }
+        }
     }
     
     private func setupCamera(completion: @escaping (Bool) -> Void) {
@@ -82,7 +96,7 @@ class AVCaptureManager: NSObject {
                 session: captureSession
             )
             DispatchQueue.main.async {
-                self.previewLayer = previewLayer
+                self.avCaptureVideoPreviewLayer = previewLayer
                 previewLayer.videoGravity = .resizeAspectFill
                 self.delegate?.avCaptureManager(self, didSetPreviewLayer: previewLayer)
                 
@@ -145,12 +159,12 @@ extension AVCaptureManager: AVCaptureVideoDataOutputSampleBufferDelegate {
     }
     
     private func handleFaceDetectionObservations(observations: [VNFaceObservation]) {
-        guard !observations.isEmpty, let previewLayer else {
+        guard !observations.isEmpty, let avCaptureVideoPreviewLayer else {
             movingTracked.append(false)
             return
         }
         for observation in observations {
-            let faceRectConverted = previewLayer.layerRectConverted(fromMetadataOutputRect: observation.boundingBox)
+            let faceRectConverted = avCaptureVideoPreviewLayer.layerRectConverted(fromMetadataOutputRect: observation.boundingBox)
             if let innerLips = observation.landmarks?.innerLips {
                 let landmarkPoints = self.handleLandmark(innerLips, faceBoundingBox: faceRectConverted)
                 checkMovingMouth(innerLipsLandmarkPoints: landmarkPoints)
