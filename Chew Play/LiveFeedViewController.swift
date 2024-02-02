@@ -5,17 +5,21 @@
 //  Created by bibek timalsina on 28/01/2024.
 //
 
-import AVFoundation
 import UIKit
-import Vision
 import WebKit
-import WebKit
+import Combine
 
 class LiveFeedViewController: UIViewController {
-    private let store = Store()
-    private let captureSession = AVCaptureSession()
-    private var previewLayer: AVCaptureVideoPreviewLayer?
-    private let videoDataOutput = AVCaptureVideoDataOutput()
+    private let avCaptureManager = AVCaptureManager()
+    
+    var store: Store {
+        avCaptureManager.store
+    }
+    
+    var previewLayer: CALayer? {
+        avCaptureManager.previewLayer
+    }
+    
     private let headerView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
@@ -33,52 +37,9 @@ class LiveFeedViewController: UIViewController {
     }()
     private let indicator = UIImageView(image: .init(systemName: "globe")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
     private let webview = WKWebView()
-    private var oldArea: Double?
-    private var timer: Timer?
-    private var check = true
-    private var time: Double = 0 {
-        didSet {
-            if time >= Double(store.resetTimeInterval) {
-                let totalChews = movingTracked.filter({ $0 }).count
-                isChewing = totalChews >= store.noOfChews
-                movingTracked = []
-                time = 0
-            }
-        }
-    }
-    private var movingTracked: [Bool] = []
-    
-    private var isChewing = false {
-        didSet {
-            if isChewing {
-                indicator.tintColor = .green
-                webview.setAllMediaPlaybackSuspended(false)
-                
-                let reward = max((store.rewardTime - store.resetTimeInterval), store.resetTimeInterval)
-                
-                DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .seconds(reward))) { [weak self] in
-                    self?.setTimer()
-                }
-            } else {
-                indicator.tintColor = .red
-                webview.setAllMediaPlaybackSuspended(true)
-            }
-        }
-    }
-
-    deinit {
-        timer?.invalidate()
-    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupCamera() {
-            if $0 {
-                DispatchQueue.global().async {
-                    self.captureSession.startRunning()
-                }
-            }
-        }
         
         textField.delegate = self
         
@@ -118,182 +79,26 @@ class LiveFeedViewController: UIViewController {
         let request = URLRequest(url: URL(string: "https://www.youtube.com/")!)
         webview.load(request)
         
-        isChewing = true
+        avCaptureManager.delegate = self
+        
+        avCaptureManager.setup()
+        isChewingCancellable = avCaptureManager.$isChewing.sink {[weak self] in
+            guard let self else { return }
+            if $0 {
+                self.indicator.tintColor = .green
+                self.webview.setAllMediaPlaybackSuspended(false)
+            } else {
+                self.indicator.tintColor = .red
+                self.webview.setAllMediaPlaybackSuspended(true)
+            }
+        }
     }
+    
+    private var isChewingCancellable: AnyCancellable?
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         self.previewLayer?.frame = self.webview.frame
-    }
-    
-    private func setTimer() {
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(
-            withTimeInterval: store.observationTimeInterval,
-            repeats: true,
-            block: { [weak self] timer in
-                guard let self else {
-                    timer.invalidate()
-                    return
-                }
-                self.time += self.store.observationTimeInterval
-                self.check = true
-            }
-        )
-    }
-    
-    private func setupCamera(completion: @escaping (Bool) -> Void) {
-        let deviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: .video, position: .front)
-        if let device = deviceDiscoverySession.devices.first {
-            device.set(frameRate: 0.25, device: device)
-
-            if let deviceInput = try? AVCaptureDeviceInput(device: device) {
-                if captureSession.canAddInput(deviceInput) {
-                    captureSession.addInput(deviceInput)
-                    setupPreview(captureSession, completion: completion)
-                    return
-                }
-            }
-        }
-        completion(false)
-    }
-    
-    private func setupPreview(_ captureSession: AVCaptureSession, completion: @escaping (Bool) -> Void) {
-        DispatchQueue.global(qos: .userInitiated).async {
-            let previewLayer = AVCaptureVideoPreviewLayer(
-                session: captureSession
-            )
-            DispatchQueue.main.async {
-                self.previewLayer = previewLayer
-                previewLayer.videoGravity = .resizeAspectFill
-                self.view.layer.addSublayer(previewLayer)
-                self.view.bringSubviewToFront(self.webview)
-                self.view.bringSubviewToFront(self.headerView)
-                previewLayer.frame = self.webview.frame
-                
-                self.videoDataOutput.videoSettings = [(kCVPixelBufferPixelFormatTypeKey as NSString) : NSNumber(value: kCVPixelFormatType_32BGRA)] as [String : Any]
-                
-                self.videoDataOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "camera queue"))
-                self.captureSession.addOutput(self.videoDataOutput)
-                let videoConnection = self.videoDataOutput.connection(with: .video)
-                videoConnection?.videoOrientation = .portrait
-                completion(true)
-            }
-        }
-    }
-}
-
-extension LiveFeedViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
-    
-    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        
-        guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-            return
-        }
-        
-        guard check else {
-            return
-        }
-        check = false
-        let faceDetectionRequest = VNDetectFaceLandmarksRequest(completionHandler: { (request: VNRequest, error: Error?) in
-            DispatchQueue.main.async {
-                if let observations = request.results as? [VNFaceObservation] {
-                    self.handleFaceDetectionObservations(observations: observations)
-                }
-            }
-        })
-        
-        let imageRequestHandler = VNImageRequestHandler(cvPixelBuffer: imageBuffer, orientation: .leftMirrored, options: [:])
-        
-        do {
-            try imageRequestHandler.perform([faceDetectionRequest])
-        } catch {
-            print(error.localizedDescription)
-        }
-    }
-    
-    private func handleFaceDetectionObservations(observations: [VNFaceObservation]) {
-        guard !observations.isEmpty, let previewLayer else {
-            movingTracked.append(false)
-            return
-        }
-        for observation in observations {
-            let faceRectConverted = previewLayer.layerRectConverted(fromMetadataOutputRect: observation.boundingBox)
-            if let innerLips = observation.landmarks?.innerLips {
-                let landmarkPoints = self.handleLandmark(innerLips, faceBoundingBox: faceRectConverted)
-                checkMovingMouth(innerLipsLandmarkPoints: landmarkPoints)
-            }
-        }
-    }
-    
-    private func checkMovingMouth(innerLipsLandmarkPoints: [CGPoint]) {
-        let newArea = getArea(points: innerLipsLandmarkPoints)
-        if let oldArea {
-            let ratio = abs(oldArea - newArea)/oldArea
-            movingTracked.append(ratio > 2)
-        }
-        oldArea = newArea
-    }
-    
-    func getArea(points: [CGPoint]) -> Double {
-        guard points.count > 2 else {
-            return 0
-        }
-        let totalTriangles = points.count - 2
-        return (0..<totalTriangles)
-            .reduce(0.0) { partialArea, index in
-                let p1 = points[0]
-                let p2 = points[index + 1]
-                let p3 = points[index + 2]
-                let a = distance(p1: p1, p2: p2)
-                let b = distance(p1: p1, p2: p3)
-                let c = distance(p1: p2, p2: p3)
-                return partialArea + self.area(a: a, b: b, c: c)
-            }
-    }
-    
-    private func area(a: Double, b: Double, c: Double) -> Double {
-        let s = (a + b + c)/2
-        return sqrt(s * (s - a) * (s - b) * (s - c))
-    }
-    
-    private func distance(p1: CGPoint, p2: CGPoint) -> Double {
-        let p1p2x: Double = (p1.x - p2.x) * (p1.x - p2.x)
-        let p1p2y: Double = (p1.y - p2.y) * (p1.y - p2.y)
-        return sqrt(p1p2x + p1p2y)
-    }
-    
-    private func handleLandmark(_ eye: VNFaceLandmarkRegion2D, faceBoundingBox: CGRect) -> [CGPoint] {
-        eye.normalizedPoints
-            .map({ eyePoint in
-                CGPoint(
-                    x: eyePoint.y * faceBoundingBox.height + faceBoundingBox.origin.x,
-                    y: eyePoint.x * faceBoundingBox.width + faceBoundingBox.origin.y)
-            })
-    }
-}
-
-extension AVCaptureDevice {
-    func set(frameRate: Double, device: AVCaptureDevice) {
-        guard let range = device.activeFormat.videoSupportedFrameRateRanges.first else {
-            print("Requested FPS is not supported by the device's activeFormat !")
-            return
-        }
-        let fr: Double
-        if range.minFrameRate...range.maxFrameRate ~= frameRate {
-            fr = frameRate
-        } else {
-            fr = range.minFrameRate
-        }
-
-        do {
-            try lockForConfiguration()
-            activeVideoMinFrameDuration = CMTimeMake(value: 1, timescale: Int32(fr))
-            activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: Int32(fr))
-            unlockForConfiguration()
-        } catch {
-            print("LockForConfiguration failed with error: \(error.localizedDescription)")
-        }
     }
 }
 
@@ -325,5 +130,14 @@ extension LiveFeedViewController: UITextFieldDelegate {
             textField.text = ""
         }
         return true
+    }
+}
+
+extension LiveFeedViewController: CaptureManagerDelegate {
+    func avCaptureManager(_ manager: AVCaptureManager, didSetPreviewLayer previewLayer: CALayer) {
+        self.view.layer.addSublayer(previewLayer)
+        self.view.bringSubviewToFront(self.webview)
+        self.view.bringSubviewToFront(self.headerView)
+        previewLayer.frame = self.webview.frame
     }
 }
