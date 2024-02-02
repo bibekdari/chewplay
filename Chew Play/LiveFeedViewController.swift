@@ -16,7 +16,6 @@ class LiveFeedViewController: UIViewController {
     private let captureSession = AVCaptureSession()
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private let videoDataOutput = AVCaptureVideoDataOutput()
-//    private var faceLayers: [CAShapeLayer] = []
     private let headerView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
@@ -32,7 +31,6 @@ class LiveFeedViewController: UIViewController {
         textField.returnKeyType = .go
         return textField
     }()
-//    private let indicator = UIImageView(image: .init(systemName: "circle.fill")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
     private let indicator = UIImageView(image: .init(systemName: "globe")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
     private let webview = WKWebView()
     private var oldArea: Double?
@@ -93,10 +91,6 @@ class LiveFeedViewController: UIViewController {
         ])
         
         headerView.addArrangedSubview(indicator)
-//        let globeIcon = UIImageView(image: .init(systemName: "globe")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
-//        globeIcon.contentMode = .scaleAspectFit
-//        headerView.addArrangedSubview(globeIcon)
-        
         headerView.addArrangedSubview(textField)
         
         let button = UIButton()
@@ -108,7 +102,6 @@ class LiveFeedViewController: UIViewController {
         headerView.addArrangedSubview(button)
         
         NSLayoutConstraint.activate([
-//            globeIcon.widthAnchor.constraint(equalTo: globeIcon.heightAnchor),
             indicator.widthAnchor.constraint(equalTo: indicator.heightAnchor),
             button.widthAnchor.constraint(equalTo: button.heightAnchor)
         ])
@@ -195,29 +188,27 @@ extension LiveFeedViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
         guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-          return
+            return
         }
-
+        
         guard check else {
             return
         }
         check = false
         let faceDetectionRequest = VNDetectFaceLandmarksRequest(completionHandler: { (request: VNRequest, error: Error?) in
             DispatchQueue.main.async {
-//                self.faceLayers.forEach({ drawing in drawing.removeFromSuperlayer() })
-
                 if let observations = request.results as? [VNFaceObservation] {
                     self.handleFaceDetectionObservations(observations: observations)
                 }
             }
         })
-
+        
         let imageRequestHandler = VNImageRequestHandler(cvPixelBuffer: imageBuffer, orientation: .leftMirrored, options: [:])
-
+        
         do {
             try imageRequestHandler.perform([faceDetectionRequest])
         } catch {
-          print(error.localizedDescription)
+            print(error.localizedDescription)
         }
     }
     
@@ -228,34 +219,22 @@ extension LiveFeedViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
         for observation in observations {
             let faceRectConverted = previewLayer.layerRectConverted(fromMetadataOutputRect: observation.boundingBox)
-//            let faceRectanglePath = CGPath(rect: faceRectConverted, transform: nil)
-            
-//            let faceLayer = CAShapeLayer()
-//            faceLayer.path = faceRectanglePath
-//            faceLayer.fillColor = UIColor.clear.cgColor
-//            faceLayer.strokeColor = UIColor.yellow.cgColor
-//
-//            self.faceLayers.append(faceLayer)
-//            self.view.layer.addSublayer(faceLayer)
-            
-            //FACE LANDMARKS
             if let innerLips = observation.landmarks?.innerLips {
                 let landmarkPoints = self.handleLandmark(innerLips, faceBoundingBox: faceRectConverted)
                 checkMovingMouth(innerLipsLandmarkPoints: landmarkPoints)
             }
         }
     }
-
+    
     private func checkMovingMouth(innerLipsLandmarkPoints: [CGPoint]) {
         let newArea = getArea(points: innerLipsLandmarkPoints)
         if let oldArea {
             let ratio = abs(oldArea - newArea)/oldArea
             movingTracked.append(ratio > 2)
-//            print(oldArea, "...", newArea, "...", ratio)
         }
         oldArea = newArea
     }
-
+    
     func getArea(points: [CGPoint]) -> Double {
         guard points.count > 2 else {
             return 0
@@ -272,36 +251,25 @@ extension LiveFeedViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
                 return partialArea + self.area(a: a, b: b, c: c)
             }
     }
-
+    
     private func area(a: Double, b: Double, c: Double) -> Double {
         let s = (a + b + c)/2
         return sqrt(s * (s - a) * (s - b) * (s - c))
     }
-
+    
     private func distance(p1: CGPoint, p2: CGPoint) -> Double {
         let p1p2x: Double = (p1.x - p2.x) * (p1.x - p2.x)
         let p1p2y: Double = (p1.y - p2.y) * (p1.y - p2.y)
         return sqrt(p1p2x + p1p2y)
     }
-
+    
     private func handleLandmark(_ eye: VNFaceLandmarkRegion2D, faceBoundingBox: CGRect) -> [CGPoint] {
-//        let landmarkPath = CGMutablePath()
-        let landmarkPathPoints = eye.normalizedPoints
+        eye.normalizedPoints
             .map({ eyePoint in
                 CGPoint(
                     x: eyePoint.y * faceBoundingBox.height + faceBoundingBox.origin.x,
                     y: eyePoint.x * faceBoundingBox.width + faceBoundingBox.origin.y)
             })
-//        landmarkPath.addLines(between: landmarkPathPoints)
-//        landmarkPath.closeSubpath()
-//        let landmarkLayer = CAShapeLayer()
-//        landmarkLayer.path = landmarkPath
-//        landmarkLayer.fillColor = UIColor.clear.cgColor
-//        landmarkLayer.strokeColor = UIColor.green.cgColor
-
-//        self.faceLayers.append(landmarkLayer)
-//        self.view.layer.addSublayer(landmarkLayer)
-        return landmarkPathPoints
     }
 }
 
