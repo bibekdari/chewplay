@@ -18,11 +18,8 @@ class ARCaptureManager: NSObject, CaptureManager {
         $isChewingSubject.eraseToAnyPublisher()
     }
     var previewLayer: CALayer? { nil }
-    var progress: AnyPublisher<Float, Never> {
-        $time.map {[weak self] in
-            guard let self else { return 0.0 }
-            return Float($0 / Double(self.store.resetTimeInterval))
-        }.eraseToAnyPublisher()
+    var progress: AnyPublisher<Int, Never> {
+        $time.map(Int.init).eraseToAnyPublisher()
     }
     
     private var onSetPreviewLayer: ((CALayer) -> ())?

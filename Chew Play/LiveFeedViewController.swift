@@ -37,11 +37,7 @@ class LiveFeedViewController: UIViewController {
     }()
     private let indicator = UIImageView(image: .init(systemName: "globe")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
     private let webview = WKWebView()
-    private let progressView: UIProgressView = {
-        let progressView = UIProgressView()
-        progressView.translatesAutoresizingMaskIntoConstraints = false
-        return progressView
-    }()
+    private let timeLabel = UILabel()
     
     init(captureManager: CaptureManager) {
         self.captureManager = captureManager
@@ -65,7 +61,7 @@ class LiveFeedViewController: UIViewController {
             headerView.heightAnchor.constraint(equalToConstant: 40),
             headerView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16)
         ])
-        
+        headerView.addArrangedSubview(timeLabel)
         headerView.addArrangedSubview(indicator)
         headerView.addArrangedSubview(textField)
         
@@ -78,6 +74,7 @@ class LiveFeedViewController: UIViewController {
         headerView.addArrangedSubview(button)
         
         NSLayoutConstraint.activate([
+            timeLabel.widthAnchor.constraint(equalTo: timeLabel.heightAnchor),
             indicator.widthAnchor.constraint(equalTo: indicator.heightAnchor),
             button.widthAnchor.constraint(equalTo: button.heightAnchor)
         ])
@@ -94,15 +91,9 @@ class LiveFeedViewController: UIViewController {
         let request = URLRequest(url: URL(string: "https://www.youtube.com/")!)
         webview.load(request)
         
-        view.addSubview(progressView)
-        NSLayoutConstraint.activate([
-            progressView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
-            progressView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            progressView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
-        ])
         captureManager.progress
             .sink { [weak self] value in
-                self?.progressView.setProgress(value, animated: true)
+                self?.timeLabel.text = "\(value)s"
             }.store(in: &cancellables)
         
         captureManager.setOnSetPreviewLayer { [weak self] previewLayer in
