@@ -13,7 +13,7 @@ class ARCaptureManager: NSObject, CaptureManager {
     func setOnSetPreviewLayer(_ value: ((CALayer) -> Void)?) {
         self.onSetPreviewLayer = value
     }
-    let store = Store()
+    let store: Store
     var isChewing: AnyPublisher<Bool, Never> {
         $isChewingSubject.eraseToAnyPublisher()
     }
@@ -49,6 +49,11 @@ class ARCaptureManager: NSObject, CaptureManager {
     
     deinit {
         timer?.invalidate()
+    }
+    
+    init(store: Store) {
+        self.store = store
+        super.init()
     }
     
     private var isChewingCancellable: AnyCancellable?
