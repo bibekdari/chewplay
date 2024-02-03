@@ -114,6 +114,8 @@ class Store {
 class SettingViewController: UIViewController {
     let store = Store()
     
+    @IBOutlet private var arSupportStatusLabel: UILabel!
+    
     @IBOutlet public var sensitivitySlider: UISlider! {
         didSet {
             updateValue()
@@ -203,5 +205,6 @@ class SettingViewController: UIViewController {
         super.viewDidLoad()
         sensitivitySlider.maximumValue = 0.5
         sensitivitySlider.minimumValue = 0
+        arSupportStatusLabel.text = ARFaceTrackingConfiguration.isSupported ? "" : "*Chew tracking can be less accurate in this device"
     }
 }
