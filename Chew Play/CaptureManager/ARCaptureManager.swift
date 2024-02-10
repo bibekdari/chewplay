@@ -49,6 +49,7 @@ class ARCaptureManager: NSObject, CaptureManager {
     
     deinit {
         timer?.invalidate()
+        session.pause()
     }
     
     init(store: Store) {
