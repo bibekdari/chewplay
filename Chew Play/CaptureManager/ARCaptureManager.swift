@@ -25,16 +25,7 @@ class ARCaptureManager: NSObject, CaptureManager {
     private var onSetPreviewLayer: ((CALayer) -> ())?
     private let session = ARSession()
     private var timer: Timer?
-    private var check = true
-    @Published private var time: Double = 0 {
-        didSet {
-            if time >= Double(store.resetTimeInterval) {
-                chewSubject = chewedCount >= store.noOfChews ? .reward : .recheck
-                chewedCount = 0
-                time = 0
-            }
-        }
-    }
+    @Published private var time: Double = 0
     private var aboveUpperLimit = false {
         didSet {
             if aboveUpperLimit == true && oldValue == false {
@@ -61,19 +52,23 @@ class ARCaptureManager: NSObject, CaptureManager {
 
     func setup() {
         session.delegate = self
-        let config = ARFaceTrackingConfiguration()
-        config.maximumNumberOfTrackedFaces = 1
-        session.run(config, options: [.resetTracking, .removeExistingAnchors])
         
         isChewingCancellable = $chewSubject.sink { [weak self] in
             guard let self else { return }
             if $0 == .reward {
-                let reward = max((self.store.rewardTime - self.store.resetTimeInterval), self.store.resetTimeInterval)
-                DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .seconds(reward))) { [weak self] in
-                    self?.setTimer()
+                self.time = Double(self.store.rewardTime)
+                self.session.pause()
+                DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .seconds(self.store.rewardTime))) { [weak self] in
+                    guard let self else { return }
+                    self.time = 0
+                    let config = ARFaceTrackingConfiguration()
+                    config.maximumNumberOfTrackedFaces = 1
+                    self.session.run(config, options: [.resetTracking, .removeExistingAnchors])
+                    self.chewSubject = .ok
                 }
             }
         }
+        setTimer()
     }
     
     private func setTimer() {
@@ -86,8 +81,16 @@ class ARCaptureManager: NSObject, CaptureManager {
                     timer.invalidate()
                     return
                 }
-                self.time += self.store.observationTimeInterval
-                self.check = true
+                if self.chewSubject == .reward {
+                    self.time -= self.store.observationTimeInterval
+                } else {
+                    self.time += self.store.observationTimeInterval
+                    if self.time >= Double(self.store.resetTimeInterval) {
+                        self.time = 0
+                        self.chewSubject = self.chewedCount >= self.store.noOfChews ? .reward : .recheck
+                        self.chewedCount = 0
+                    }
+                }
             }
         )
     }
