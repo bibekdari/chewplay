@@ -53,6 +53,7 @@ class LiveFeedViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         textField.delegate = self
+        timeLabel.textAlignment = .center
         
         view.addSubview(headerView)
         NSLayoutConstraint.activate([
