@@ -55,6 +55,13 @@ class LiveFeedViewController: UIViewController {
         textField.delegate = self
         timeLabel.textAlignment = .center
         
+        let refreshButton = UIButton()
+        refreshButton.translatesAutoresizingMaskIntoConstraints = false
+        refreshButton.setImage(.init(systemName: "arrow.clockwise"), for: .normal)
+        refreshButton.addAction(UIAction(handler: { [weak self] _ in
+            self?.webview.reload()
+        }), for: .touchUpInside)
+        
         view.addSubview(headerView)
         NSLayoutConstraint.activate([
             headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -64,6 +71,7 @@ class LiveFeedViewController: UIViewController {
         ])
         headerView.addArrangedSubview(timeLabel)
         headerView.addArrangedSubview(indicator)
+        headerView.addArrangedSubview(refreshButton)
         headerView.addArrangedSubview(textField)
         
         let button = UIButton()
@@ -77,7 +85,8 @@ class LiveFeedViewController: UIViewController {
         NSLayoutConstraint.activate([
             timeLabel.widthAnchor.constraint(equalTo: timeLabel.heightAnchor),
             indicator.widthAnchor.constraint(equalTo: indicator.heightAnchor),
-            button.widthAnchor.constraint(equalTo: button.heightAnchor)
+            button.widthAnchor.constraint(equalTo: button.heightAnchor),
+            refreshButton.widthAnchor.constraint(equalTo: refreshButton.heightAnchor)
         ])
 
         webview.translatesAutoresizingMaskIntoConstraints = false
