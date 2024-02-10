@@ -51,7 +51,7 @@ class LiveFeedViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        view.backgroundColor = .systemBackground
         textField.delegate = self
         
         view.addSubview(headerView)
