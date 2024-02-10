@@ -15,8 +15,8 @@ class AVCaptureManager: NSObject, CaptureManager {
         self.onSetPreviewLayer = value
     }
     let store: Store
-    var isChewing: AnyPublisher<Bool, Never> {
-        $isChewingSubject.eraseToAnyPublisher()
+    var chew: AnyPublisher<ChewState, Never> {
+        $isChewingSubject.map{ $0 ? .ok : .recheck }.eraseToAnyPublisher()
     }
     var previewLayer: CALayer? { avCaptureVideoPreviewLayer }
     var progress: AnyPublisher<Int, Never> {

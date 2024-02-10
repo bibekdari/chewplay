@@ -115,16 +115,19 @@ class LiveFeedViewController: UIViewController {
         }
         
         captureManager.setup()
-        captureManager.isChewing
+        captureManager.chew
             .sink {[weak self] in
                 guard let self else { return }
-                if $0 {
+                switch $0 {
+                case .ok:
                     self.indicator.text = "🟢"
+                case .reward:
+                    self.indicator.text = "🎉"
                     if self.mediaPlaybackSuspended {
                         self.mediaPlaybackSuspended = false
                         self.webview.setAllMediaPlaybackSuspended(false)
                     }
-                } else {
+                case .recheck:
                     self.indicator.text = "🔴"
                     if !self.mediaPlaybackSuspended {
                         self.mediaPlaybackSuspended = true

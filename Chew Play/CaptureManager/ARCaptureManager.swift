@@ -14,8 +14,8 @@ class ARCaptureManager: NSObject, CaptureManager {
         self.onSetPreviewLayer = value
     }
     let store: Store
-    var isChewing: AnyPublisher<Bool, Never> {
-        $isChewingSubject.eraseToAnyPublisher()
+    var chew: AnyPublisher<ChewState, Never> {
+        $chewSubject.eraseToAnyPublisher()
     }
     var previewLayer: CALayer? { nil }
     var progress: AnyPublisher<Int, Never> {
@@ -29,7 +29,7 @@ class ARCaptureManager: NSObject, CaptureManager {
     @Published private var time: Double = 0 {
         didSet {
             if time >= Double(store.resetTimeInterval) {
-                isChewingSubject = chewedCount >= store.noOfChews
+                chewSubject = chewedCount >= store.noOfChews ? .reward : .recheck
                 chewedCount = 0
                 time = 0
             }
@@ -45,7 +45,7 @@ class ARCaptureManager: NSObject, CaptureManager {
     
     private var chewedCount = 0
     
-    @Published private var isChewingSubject = false
+    @Published private var chewSubject = ChewState.reward
     
     deinit {
         timer?.invalidate()
@@ -64,10 +64,9 @@ class ARCaptureManager: NSObject, CaptureManager {
         config.maximumNumberOfTrackedFaces = 1
         session.run(config, options: [.resetTracking, .removeExistingAnchors])
         
-        isChewingSubject = true
-        isChewingCancellable = $isChewingSubject.sink { [weak self] value in
+        isChewingCancellable = $chewSubject.sink { [weak self] in
             guard let self else { return }
-            if value {
+            if $0 == .reward {
                 let reward = max((self.store.rewardTime - self.store.resetTimeInterval), self.store.resetTimeInterval)
                 DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .seconds(reward))) { [weak self] in
                     self?.setTimer()
