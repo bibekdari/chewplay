@@ -97,7 +97,7 @@ class LiveFeedViewController: UIViewController {
             webview.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             webview.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
-        webview.configuration.allowsInlineMediaPlayback = true
+        webview.configuration.allowsPictureInPictureMediaPlayback = false
         let request = URLRequest(url: URL(string: "https://www.youtube.com/")!)
         webview.load(request)
         
