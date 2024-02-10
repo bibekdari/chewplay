@@ -11,7 +11,7 @@ import Combine
 
 class LiveFeedViewController: UIViewController {
     private let captureManager: CaptureManager
-    
+    private var mediaPlaybackSuspended = false
     var store: Store {
         captureManager.store
     }
@@ -120,10 +120,16 @@ class LiveFeedViewController: UIViewController {
                 guard let self else { return }
                 if $0 {
                     self.indicator.text = "🟢"
-                    self.webview.setAllMediaPlaybackSuspended(false)
+                    if self.mediaPlaybackSuspended {
+                        self.mediaPlaybackSuspended = false
+                        self.webview.setAllMediaPlaybackSuspended(false)
+                    }
                 } else {
                     self.indicator.text = "🔴"
-                    self.webview.setAllMediaPlaybackSuspended(true)
+                    if !self.mediaPlaybackSuspended {
+                        self.mediaPlaybackSuspended = true
+                        self.webview.setAllMediaPlaybackSuspended(true)
+                    }
                 }
             }
             .store(in: &cancellables)
