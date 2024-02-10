@@ -35,7 +35,7 @@ class LiveFeedViewController: UIViewController {
         textField.returnKeyType = .go
         return textField
     }()
-    private let indicator = UIImageView(image: .init(systemName: "globe")?.withAlignmentRectInsets(.init(top: -8, left: -8, bottom: -8, right: -8)))
+    private let indicator = UILabel()
     private let webview = WKWebView()
     private let timeLabel = UILabel()
     
@@ -109,10 +109,10 @@ class LiveFeedViewController: UIViewController {
             .sink {[weak self] in
                 guard let self else { return }
                 if $0 {
-                    self.indicator.tintColor = .green
+                    self.indicator.text = "🟢"
                     self.webview.setAllMediaPlaybackSuspended(false)
                 } else {
-                    self.indicator.tintColor = .red
+                    self.indicator.text = "🔴"
                     self.webview.setAllMediaPlaybackSuspended(true)
                 }
             }
