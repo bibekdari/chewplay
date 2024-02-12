@@ -114,6 +114,7 @@ class SettingViewController: UIViewController {
     let store = Store()
     
     @IBOutlet private var arSupportStatusLabel: UILabel!
+    @IBOutlet private var sensitivityStackView: UIStackView!
     
     @IBOutlet public var sensitivitySlider: UISlider! {
         didSet {
@@ -205,6 +206,7 @@ class SettingViewController: UIViewController {
         sensitivitySlider.maximumValue = 0.5
         sensitivitySlider.minimumValue = 0
         arSupportStatusLabel.text = isARFaceTrackingSupported ? "" : "*Chew tracking can be less accurate in this device"
+        sensitivityStackView.isHidden = !isARFaceTrackingSupported
     }
     
     private let isARFaceTrackingSupported = ARCaptureManager.isARFaceTrackingSupported

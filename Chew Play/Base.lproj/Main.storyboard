@@ -263,6 +263,7 @@
                         <outlet property="countLabel" destination="jCa-93-oln" id="udw-G0-Cfs"/>
                         <outlet property="rewardLabel" destination="lqU-DA-65D" id="T1m-wC-Ari"/>
                         <outlet property="sensitivitySlider" destination="sKF-eB-n5a" id="aTS-YG-Cp7"/>
+                        <outlet property="sensitivityStackView" destination="1lC-8Y-KcP" id="4aw-NA-oO0"/>
                         <outlet property="textLabel" destination="Eu4-Ub-tmU" id="Q9c-hi-ZmB"/>
                         <outlet property="timeIntervalLabel" destination="6yZ-7p-CTw" id="S2B-iS-Eyi"/>
                     </connections>
