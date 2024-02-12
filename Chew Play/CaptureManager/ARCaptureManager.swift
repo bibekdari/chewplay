@@ -23,7 +23,6 @@ class ARCaptureManager: NSObject, CaptureManager {
         $time.map(Int.init).eraseToAnyPublisher()
     }
     
-    private var hasValidPlayback: (() async -> Bool)?
     private var onSetPreviewLayer: ((CALayer) -> ())?
     private let session = ARSession()
     private var timer: Timer?
@@ -53,8 +52,7 @@ class ARCaptureManager: NSObject, CaptureManager {
     private var chewSubjectCancellable: AnyCancellable?
     private var rewardWaitTask: Task<Void, Never>?
 
-    func setup(_ hasValidPlayback: (() async -> Bool)?) {
-        self.hasValidPlayback = hasValidPlayback
+    func setup() {
         session.delegate = self
         
         chewSubjectCancellable = $chewSubject.sink { [weak self] in
@@ -66,10 +64,7 @@ class ARCaptureManager: NSObject, CaptureManager {
                 self.rewardWaitTask = Task { @MainActor [weak self] in
                     try? await Task.sleep(nanoseconds: NSEC_PER_SEC * UInt64(self?.store.rewardTime ?? 0))
                     guard !Task.isCancelled,
-                          await self?.hasValidPlayback?() ?? false,
-                          !Task.isCancelled,
                           let self = self else {
-                        self?.chewSubject = .reward
                         return
                     }
                     self.time = 0

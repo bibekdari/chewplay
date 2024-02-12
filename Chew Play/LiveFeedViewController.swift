@@ -114,13 +114,7 @@ class LiveFeedViewController: UIViewController {
             previewLayer.frame = self.webview.frame
         }
         
-        captureManager.setup { [weak self] in
-            guard let playbackState = await self?.webview.requestMediaPlaybackState() else {
-                return false
-            }
-            return playbackState == .suspended || playbackState == .playing
-        }
-        
+        captureManager.setup()
         captureManager.chew
             .sink {[weak self] in
                 guard let self else { return }
