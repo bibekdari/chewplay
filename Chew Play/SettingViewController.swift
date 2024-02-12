@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import ARKit
 
 class Store {
     private enum Constants {
@@ -195,7 +194,7 @@ class SettingViewController: UIViewController {
     }
     
     @IBAction public func start(_ sender: UIButton) {
-        let captureManager: CaptureManager = ARFaceTrackingConfiguration.isSupported ? ARCaptureManager(store: store) : AVCaptureManager(store: store)
+        let captureManager: CaptureManager = isARFaceTrackingSupported ? ARCaptureManager(store: store) : AVCaptureManager(store: store)
         let vc = LiveFeedViewController(captureManager: captureManager)
         vc.modalPresentationStyle = .fullScreen
         self.present(vc, animated: true)
@@ -205,6 +204,8 @@ class SettingViewController: UIViewController {
         super.viewDidLoad()
         sensitivitySlider.maximumValue = 0.5
         sensitivitySlider.minimumValue = 0
-        arSupportStatusLabel.text = ARFaceTrackingConfiguration.isSupported ? "" : "*Chew tracking can be less accurate in this device"
+        arSupportStatusLabel.text = isARFaceTrackingSupported ? "" : "*Chew tracking can be less accurate in this device"
     }
+    
+    private let isARFaceTrackingSupported = ARCaptureManager.isARFaceTrackingSupported
 }

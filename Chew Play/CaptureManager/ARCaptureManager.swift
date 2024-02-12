@@ -10,6 +10,7 @@ import ARKit
 import Combine
 
 class ARCaptureManager: NSObject, CaptureManager {
+    static let isARFaceTrackingSupported = ARFaceTrackingConfiguration.isSupported
     func setOnSetPreviewLayer(_ value: ((CALayer) -> Void)?) {
         self.onSetPreviewLayer = value
     }
