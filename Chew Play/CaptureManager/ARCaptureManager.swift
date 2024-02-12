@@ -22,10 +22,10 @@ class ARCaptureManager: NSObject, CaptureManager {
         $time.map(Int.init).eraseToAnyPublisher()
     }
     
+    private var hasValidPlayback: (() async -> Bool)?
     private var onSetPreviewLayer: ((CALayer) -> ())?
     private let session = ARSession()
     private var timer: Timer?
-    @Published private var time: Double = 0
     private var aboveUpperLimit = false {
         didSet {
             if aboveUpperLimit == true && oldValue == false {
@@ -33,14 +33,15 @@ class ARCaptureManager: NSObject, CaptureManager {
             }
         }
     }
-    
     private var chewedCount = 0
     
+    @Published private var time: Double = 0
     @Published private var chewSubject = ChewState.reward
     
     deinit {
         timer?.invalidate()
         session.pause()
+        rewardWaitTask?.cancel()
     }
     
     init(store: Store) {
@@ -49,8 +50,10 @@ class ARCaptureManager: NSObject, CaptureManager {
     }
     
     private var isChewingCancellable: AnyCancellable?
+    private var rewardWaitTask: Task<Void, Never>?
 
-    func setup() {
+    func setup(_ hasValidPlayback: (() async -> Bool)?) {
+        self.hasValidPlayback = hasValidPlayback
         session.delegate = self
         
         isChewingCancellable = $chewSubject.sink { [weak self] in
@@ -58,8 +61,16 @@ class ARCaptureManager: NSObject, CaptureManager {
             if $0 == .reward {
                 self.time = Double(self.store.rewardTime)
                 self.session.pause()
-                DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .seconds(self.store.rewardTime))) { [weak self] in
-                    guard let self else { return }
+                self.rewardWaitTask?.cancel()
+                self.rewardWaitTask = Task { @MainActor [weak self] in
+                    try? await Task.sleep(nanoseconds: NSEC_PER_SEC * UInt64(self?.store.rewardTime ?? 0))
+                    guard !Task.isCancelled,
+                          await self?.hasValidPlayback?() ?? false,
+                          !Task.isCancelled,
+                          let self = self else {
+                        self?.chewSubject = .reward
+                        return
+                    }
                     self.time = 0
                     let config = ARFaceTrackingConfiguration()
                     config.maximumNumberOfTrackedFaces = 1

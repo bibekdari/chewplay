@@ -13,7 +13,7 @@ protocol CaptureManager {
     var previewLayer: CALayer? { get }
     var chew: AnyPublisher<ChewState, Never> { get }
     var progress: AnyPublisher<Int, Never> { get }
-    func setup()
+    func setup(_ hasValidPlayback: (() async -> Bool)?)
     func setOnSetPreviewLayer(_ value: ((CALayer) -> Void)?)
 }
 

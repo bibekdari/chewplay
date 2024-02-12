@@ -23,6 +23,7 @@ class AVCaptureManager: NSObject, CaptureManager {
         $time.map(Int.init).eraseToAnyPublisher()
     }
     
+    private var hasValidPlayback: (() async -> Bool)?
     private var onSetPreviewLayer: ((CALayer) -> ())?
     private let captureSession = AVCaptureSession()
     private let videoDataOutput = AVCaptureVideoDataOutput()
@@ -54,7 +55,9 @@ class AVCaptureManager: NSObject, CaptureManager {
     
     private var isChewingCancellable: AnyCancellable?
     
-    func setup() {
+    func setup(_ hasValidPlayback: (() async -> Bool)?) {
+        self.hasValidPlayback = hasValidPlayback
+    
         setupCamera() {
             if $0 {
                 DispatchQueue.global().async {

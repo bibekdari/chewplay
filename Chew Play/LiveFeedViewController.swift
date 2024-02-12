@@ -114,7 +114,13 @@ class LiveFeedViewController: UIViewController {
             previewLayer.frame = self.webview.frame
         }
         
-        captureManager.setup()
+        captureManager.setup { [weak self] in
+            guard let playbackState = await self?.webview.requestMediaPlaybackState() else {
+                return false
+            }
+            return playbackState == .suspended || playbackState == .playing
+        }
+        
         captureManager.chew
             .sink {[weak self] in
                 guard let self else { return }
@@ -136,7 +142,6 @@ class LiveFeedViewController: UIViewController {
                 }
             }
             .store(in: &cancellables)
-        captureManager.setup()
     }
     
     private var cancellables = Set<AnyCancellable>()
