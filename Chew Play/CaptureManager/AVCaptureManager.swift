@@ -48,7 +48,6 @@ class AVCaptureManager: NSObject, CaptureManager {
     private var rewardWaitTask: Task<Void, Never>?
     
     func setup() {
-    
         setupCamera() {
             if $0 {
                 DispatchQueue.global().async {
@@ -60,17 +59,22 @@ class AVCaptureManager: NSObject, CaptureManager {
             guard let self else { return }
             if $0 == .reward {
                 self.time = Double(self.store.rewardTime)
-                self.captureSession.stopRunning()
+                DispatchQueue.global(qos: .userInitiated).async {
+                    if self.captureSession.isRunning {
+                        self.captureSession.stopRunning()
+                    }
+                }
                 self.rewardWaitTask?.cancel()
                 self.rewardWaitTask = Task { @MainActor [weak self] in
                     try? await Task.sleep(nanoseconds: NSEC_PER_SEC * UInt64(self?.store.rewardTime ?? 0))
                     guard !Task.isCancelled,
                           let self = self else {
-                        self?.chewSubject = .reward
                         return
                     }
                     self.time = 0
-                    self.captureSession.startRunning()
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        self.captureSession.startRunning()
+                    }
                     self.chewSubject = .ok
                 }
             }
