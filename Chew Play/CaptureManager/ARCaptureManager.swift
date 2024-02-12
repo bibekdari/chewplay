@@ -49,14 +49,14 @@ class ARCaptureManager: NSObject, CaptureManager {
         super.init()
     }
     
-    private var isChewingCancellable: AnyCancellable?
+    private var chewSubjectCancellable: AnyCancellable?
     private var rewardWaitTask: Task<Void, Never>?
 
     func setup(_ hasValidPlayback: (() async -> Bool)?) {
         self.hasValidPlayback = hasValidPlayback
         session.delegate = self
         
-        isChewingCancellable = $chewSubject.sink { [weak self] in
+        chewSubjectCancellable = $chewSubject.sink { [weak self] in
             guard let self else { return }
             if $0 == .reward {
                 self.time = Double(self.store.rewardTime)
