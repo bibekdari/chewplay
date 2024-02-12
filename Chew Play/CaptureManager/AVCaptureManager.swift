@@ -69,8 +69,7 @@ class AVCaptureManager: NSObject, CaptureManager {
         isChewingCancellable = $isChewingSubject.sink { [weak self] value in
             guard let self else { return }
             if value {
-                let reward = max((self.store.rewardTime - self.store.resetTimeInterval), self.store.resetTimeInterval)
-                DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .seconds(reward))) { [weak self] in
+                DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .seconds(self.store.rewardTime))) { [weak self] in
                     self?.setTimer()
                 }
             }
