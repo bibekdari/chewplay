@@ -16,7 +16,7 @@ class AVCaptureManager: NSObject, CaptureManager {
     }
     let store: Store
     var chew: AnyPublisher<ChewState, Never> {
-        $isChewingSubject.map{ $0 ? .ok : .recheck }.eraseToAnyPublisher()
+        $chewSubject.eraseToAnyPublisher()
     }
     var previewLayer: CALayer? { avCaptureVideoPreviewLayer }
     var progress: AnyPublisher<Int, Never> {
@@ -31,21 +31,13 @@ class AVCaptureManager: NSObject, CaptureManager {
     private var oldArea: Double?
     private var timer: Timer?
     private var check = true
-    @Published private var time: Double = 0 {
-        didSet {
-            if time >= Double(store.resetTimeInterval) {
-                let totalChews = movingTracked.filter({ $0 }).count
-                isChewingSubject = totalChews >= store.noOfChews
-                movingTracked = []
-                time = 0
-            }
-        }
-    }
+    @Published private var time: Double = 0
     private var movingTracked: [Bool] = []
-    @Published private var isChewingSubject = false
+    @Published private var chewSubject = ChewState.reward
     
     deinit {
         timer?.invalidate()
+        captureSession.stopRunning()
     }
     
     init(store: Store) {
@@ -53,7 +45,8 @@ class AVCaptureManager: NSObject, CaptureManager {
         super.init()
     }
     
-    private var isChewingCancellable: AnyCancellable?
+    private var chewSubjectCancellable: AnyCancellable?
+    private var rewardWaitTask: Task<Void, Never>?
     
     func setup(_ hasValidPlayback: (() async -> Bool)?) {
         self.hasValidPlayback = hasValidPlayback
@@ -65,15 +58,28 @@ class AVCaptureManager: NSObject, CaptureManager {
                 }
             }
         }
-        isChewingSubject = true
-        isChewingCancellable = $isChewingSubject.sink { [weak self] value in
+        chewSubjectCancellable = $chewSubject.sink { [weak self] in
             guard let self else { return }
-            if value {
-                DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .seconds(self.store.rewardTime))) { [weak self] in
-                    self?.setTimer()
+            if $0 == .reward {
+                self.time = Double(self.store.rewardTime)
+                self.captureSession.stopRunning()
+                self.rewardWaitTask?.cancel()
+                self.rewardWaitTask = Task { @MainActor [weak self] in
+                    try? await Task.sleep(nanoseconds: NSEC_PER_SEC * UInt64(self?.store.rewardTime ?? 0))
+                    guard !Task.isCancelled,
+                          await self?.hasValidPlayback?() ?? false,
+                          !Task.isCancelled,
+                          let self = self else {
+                        self?.chewSubject = .reward
+                        return
+                    }
+                    self.time = 0
+                    self.captureSession.startRunning()
+                    self.chewSubject = .ok
                 }
             }
         }
+        setTimer()
     }
     
     private func setupCamera(completion: @escaping (Bool) -> Void) {
@@ -123,8 +129,17 @@ class AVCaptureManager: NSObject, CaptureManager {
                     timer.invalidate()
                     return
                 }
-                self.time += self.store.observationTimeInterval
-                self.check = true
+                if self.chewSubject == .reward {
+                    self.time -= self.store.observationTimeInterval
+                } else {
+                    self.time += self.store.observationTimeInterval
+                    if self.time >= Double(self.store.resetTimeInterval) {
+                        let totalChews = self.movingTracked.filter({ $0 }).count
+                        self.chewSubject = totalChews >= self.store.noOfChews ? .reward : .recheck
+                        self.movingTracked = []
+                        self.time = 0
+                    }
+                }
             }
         )
     }
