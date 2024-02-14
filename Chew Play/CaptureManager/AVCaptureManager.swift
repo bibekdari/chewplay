@@ -48,41 +48,37 @@ class AVCaptureManager: NSObject, CaptureManager {
     private var rewardWaitTask: Task<Void, Never>?
     
     func setup() {
-        setupCamera() {
-            if $0 {
-                DispatchQueue.global().async {
-                    self.captureSession.startRunning()
-                }
-            }
-        }
-        chewSubjectCancellable = $chewSubject.sink { [weak self] in
-            guard let self else { return }
-            if $0 == .reward {
-                self.time = Double(self.store.rewardTime)
-                DispatchQueue.global(qos: .userInitiated).async {
-                    if self.captureSession.isRunning {
-                        self.captureSession.stopRunning()
-                    }
-                }
-                self.rewardWaitTask?.cancel()
-                self.rewardWaitTask = Task { @MainActor [weak self] in
-                    try? await Task.sleep(nanoseconds: NSEC_PER_SEC * UInt64(self?.store.rewardTime ?? 0))
-                    guard !Task.isCancelled,
-                          let self = self else {
-                        return
-                    }
-                    self.time = 0
+        Task { @MainActor in
+            guard await setupCamera() else { return }
+            chewSubjectCancellable = $chewSubject.sink { [weak self] in
+                guard let self else { return }
+                if $0 == .reward {
+                    self.time = Double(self.store.rewardTime)
                     DispatchQueue.global(qos: .userInitiated).async {
-                        self.captureSession.startRunning()
+                        if self.captureSession.isRunning {
+                            self.captureSession.stopRunning()
+                        }
                     }
-                    self.chewSubject = .ok
+                    self.rewardWaitTask?.cancel()
+                    self.rewardWaitTask = Task { @MainActor [weak self] in
+                        try? await Task.sleep(nanoseconds: NSEC_PER_SEC * UInt64(self?.store.rewardTime ?? 0))
+                        guard !Task.isCancelled,
+                              let self = self else {
+                            return
+                        }
+                        self.time = 0
+                        DispatchQueue.global(qos: .userInitiated).async {
+                            self.captureSession.startRunning()
+                        }
+                        self.chewSubject = .ok
+                    }
                 }
             }
+            setTimer()
         }
-        setTimer()
     }
     
-    private func setupCamera(completion: @escaping (Bool) -> Void) {
+    private func setupCamera() async -> Bool {
         let deviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: .video, position: .front)
         if let device = deviceDiscoverySession.devices.first {
             device.set(frameRate: 0.25, device: device)
@@ -90,33 +86,28 @@ class AVCaptureManager: NSObject, CaptureManager {
             if let deviceInput = try? AVCaptureDeviceInput(device: device) {
                 if captureSession.canAddInput(deviceInput) {
                     captureSession.addInput(deviceInput)
-                    setupPreview(captureSession, completion: completion)
-                    return
+                    await setupPreview(captureSession)
+                    return true
                 }
             }
         }
-        completion(false)
+        return false
     }
     
-    private func setupPreview(_ captureSession: AVCaptureSession, completion: @escaping (Bool) -> Void) {
-        DispatchQueue.global(qos: .userInitiated).async {
-            let previewLayer = AVCaptureVideoPreviewLayer(
-                session: captureSession
-            )
-            DispatchQueue.main.async {
-                self.avCaptureVideoPreviewLayer = previewLayer
-                previewLayer.videoGravity = .resizeAspectFill
-                self.onSetPreviewLayer?(previewLayer)
-                
-                self.videoDataOutput.videoSettings = [(kCVPixelBufferPixelFormatTypeKey as NSString) : NSNumber(value: kCVPixelFormatType_32BGRA)] as [String : Any]
-                
-                self.videoDataOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "camera queue"))
-                self.captureSession.addOutput(self.videoDataOutput)
-                let videoConnection = self.videoDataOutput.connection(with: .video)
-                videoConnection?.videoOrientation = .portrait
-                completion(true)
-            }
-        }
+    @MainActor
+    private func setupPreview(_ captureSession: AVCaptureSession) async {
+        let previewLayer = await Task(priority: .userInitiated) { AVCaptureVideoPreviewLayer(session: captureSession) }.value
+        
+        self.avCaptureVideoPreviewLayer = previewLayer
+        previewLayer.videoGravity = .resizeAspectFill
+        self.onSetPreviewLayer?(previewLayer)
+        
+        self.videoDataOutput.videoSettings = [(kCVPixelBufferPixelFormatTypeKey as NSString) : NSNumber(value: kCVPixelFormatType_32BGRA)] as [String : Any]
+        
+        self.videoDataOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "camera queue"))
+        self.captureSession.addOutput(self.videoDataOutput)
+        let videoConnection = self.videoDataOutput.connection(with: .video)
+        videoConnection?.videoOrientation = .portrait
     }
     
     private func setTimer() {
