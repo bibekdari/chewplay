@@ -125,10 +125,10 @@ class AVCaptureManager: NSObject, CaptureManager {
                 } else {
                     self.time += self.store.observationTimeInterval
                     if self.time >= Double(self.store.resetTimeInterval) {
+                        self.time = 0
                         let totalChews = self.movingTracked.filter({ $0 }).count
                         self.chewSubject = totalChews >= self.store.noOfChews ? .reward : .recheck
                         self.movingTracked = []
-                        self.time = 0
                     }
                     self.check = true
                 }
