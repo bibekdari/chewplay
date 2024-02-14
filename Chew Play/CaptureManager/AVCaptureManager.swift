@@ -130,6 +130,7 @@ class AVCaptureManager: NSObject, CaptureManager {
                         self.movingTracked = []
                         self.time = 0
                     }
+                    self.check = true
                 }
             }
         )
