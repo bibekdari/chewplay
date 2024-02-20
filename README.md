@@ -9,7 +9,7 @@
 <p align="center">
     <img src="https://github.com/bibekdari/chewplay/blob/main/Chew%20Play/Assets.xcassets/ChewLaunch.imageset/ChewLaunch.png?raw=true" alt="Logo" width="100" height="100">
   <p align="center">
-    Use Vision Framework to determine if person facing the phone is moving his/her mouth or not.<br>
+    Use ARKit ARFaceTracking(in ARFaceTracking supported devices) and Vision Framework (in ARFaceTracking not supported devices) to determine if person facing the phone is moving his/her mouth or not.<br>
     If user moves the mouth, the video plays. Pauses if user doesn't move mouth.
   </p>
 </p>
